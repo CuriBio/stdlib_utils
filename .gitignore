@@ -1,0 +1,33 @@
+# IDE
+.idea/
+.~c9*
+
+# Python
+*.py[cod]
+__pycache__/
+
+# Venv
+.venv/
+venv/
+*.egg-info
+
+
+# sphinx html
+docs/build
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
+tests/**/snapshots/*_actual.png
+tests/**/snapshots/*_diff.png
+
+# Local files
+downloads/
+pipeline_outputs/
+*.gz
+*.tsv
+*.csv
+
+
+secrets.json

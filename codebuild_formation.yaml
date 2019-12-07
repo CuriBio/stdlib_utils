@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+
+# Adapted from: https://github.com/aws-samples/aws-codebuild-samples/blob/master/cloudformation/continuous-integration-pull-request-checks.yml
+# to create: aws cloudformation deploy --stack-name=codebuild-stdlib-utils --parameter-overrides "CodeCommitRepoName=stdlib_utils" --template-file=codebuild_formation.yaml --capabilities CAPABILITY_NAMED_IAM
+
+Description: Perform continuous integration pull request checks on a CodeCommit repository with CodeBuild
+
+Parameters:
+  CodeCommitRepoName:
+    Description: A CodeCommit repository that contains the application code. Must be in same region as this stack.
+    Type: String
+    # Default: aws-codebuild-samples
+
+Resources:
+  CodeBuildPolicy:
+    Description: Setting IAM policy for service role for CodeBuild
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - codecommit:GitPull
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - codecommit:GitPush
+          Effect: Allow
+          Resource: '*'
+          # Eli (11/20/19): this is not actually effectively restricting pushes to only master for some unknown reason...
+          # Eli (12/4/19): ...it somehow now seems to be preventing pushses to master...???
+          # Condition:
+          #   'ForAnyValue:StringEqualsIfExists':
+          #     'codecommit:References':
+          #       - 'refs/heads/master'
+          #   'Null':
+          #     'codecommit:References': 'false'
+      PolicyName: !Join
+        - '-'
+        -  - !Ref 'AWS::StackName'
+           - CodeBuildPolicy
+      Roles:
+      - !Ref 'CodeBuildRole'
+    Type: AWS::IAM::Policy
+
+  CodeBuildProject:
+    DependsOn:
+    - CodeBuildPolicy
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      BadgeEnabled: true
+      Description: !Join
+        - ''
+        - - 'CodeBuild Project for '
+          - !Ref 'AWS::StackName'
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:1.0-1.8.0
+        Type: LINUX_CONTAINER
+      Name: !Ref 'CodeCommitRepoName'
+      ServiceRole: !Ref 'CodeBuildRole'
+      Source:
+        Type: CODECOMMIT
+        Location: !Join
+          - ''
+          - - 'https://git-codecommit.'
+            - !Ref 'AWS::Region'
+            - '.amazonaws.com/v1/repos/'
+            - !Ref 'CodeCommitRepoName'
+      QueuedTimeoutInMinutes: 10
+      TimeoutInMinutes: 30
+    Type: AWS::CodeBuild::Project
+
+  CodeBuildRole:
+    Description: Creating service role in IAM for AWS CodeBuild
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+      Path: /
+      RoleName: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - CodeBuild
+    Type: AWS::IAM::Role

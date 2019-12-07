@@ -1,0 +1,20 @@
+# sudo apt-get install python3-venv
+# python3 -m venv venv
+
+# pip install -r requirements-dev.txt --find-links python_pip_package_links/package_links.html
+
+# install the current package in editable mode
+# pip install -e . --find-links python_pip_package_links/package_links.html
+
+# to store git credentials:
+# git config credential.helper store
+#  then do a git command, enter credentials, and they should be saved after that
+
+pre-commit==1.18.3 # run 'pre-commit install' initially to install the git hooks
+pytest==4.5.0
+pytest-randomly==3.0.0
+sphinx==2.2.1
+pylint==2.4.3
+pytest-pylint==0.14.1
+
+pytest-mock==1.11.1

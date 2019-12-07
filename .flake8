@@ -1,0 +1,10 @@
+[flake8]
+# use B950 instead of E501 to allow slightly longer line lengths (black sets the max at 88 chars)
+
+# W503 is incompatible with PEP8 (according to https://github.com/ambv/black/issues/43)
+
+max-line-length = 80
+select = C,E,F,W,B,B950
+ignore = E501,W503
+import-order-style = google
+application-import-names = pyqt_test_utils
