@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Misc helper utilities."""
+import ctypes
 import inspect
 import os
+import signal
 import sys
 from typing import Optional
 
@@ -41,3 +43,25 @@ def resource_path(relative_path: str, base_path: Optional[str] = None):
     if is_frozen_as_exe():
         base_path = get_path_to_frozen_bundle()
     return os.path.join(base_path, relative_path)
+
+
+def is_system_windows() -> bool:
+    """Check if running on windows."""
+    system_type = os.name
+    return system_type == "nt"
+
+
+def raise_alarm_signal():
+    """Raise signal in a UNIX and Windows compatible manner.
+
+    Raises signal.SIGALRM which may not exist on windows, but is 14 as
+    an int. Raise it as fast as possible. In Python 3.8, raise_signal
+    may be a cross-platform option.
+    """
+    if is_system_windows():
+        # from https://stackoverflow.com/questions/14457723/can-i-raise-a-signal-from-python
+        ucrtbase = ctypes.CDLL("ucrtbase")
+        c_raise = ucrtbase["raise"]
+        c_raise(14)
+    else:
+        signal.setitimer(signal.ITIMER_REAL, 0.001)
