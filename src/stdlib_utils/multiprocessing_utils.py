@@ -5,6 +5,7 @@ from multiprocessing import Event
 from multiprocessing import Process
 import multiprocessing.queues
 import queue
+from typing import Optional
 
 
 class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
@@ -40,10 +41,11 @@ class GenericProcess(Process):
         self.process_can_be_soft_stopped = True
         self._soft_stop_event = Event()
 
-    def run(self, run_once: bool = False):
+    def run(self, num_iterations: Optional[int] = None):
         """Run the process.
 
         Args:
+            num_iterations: typically used for unit testing to just execute one or a few cycles. if left as None will loop infinitely
             run_once: typically used for unit testing to just execute one cycle
 
         This sets up the basic flow control and error handling.
@@ -51,6 +53,9 @@ class GenericProcess(Process):
         cycle in the _commands_for_each_run_iteration method.
         """
         # pylint: disable=arguments-differ
+        if num_iterations is None:
+            num_iterations = -1
+        completed_iterations = 0
         while True:
             self.process_can_be_soft_stopped = True
             try:
@@ -64,7 +69,8 @@ class GenericProcess(Process):
             if self.is_stopped():
                 # Having the check for is_stopped after the first iteration of run allows easier unit testing.
                 break
-            if run_once:
+            completed_iterations += 1
+            if completed_iterations == num_iterations:
                 break
 
     def _commands_for_each_run_iteration(self):

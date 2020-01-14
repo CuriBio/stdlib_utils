@@ -57,8 +57,17 @@ def test_GenericProcess__run_can_be_executed_just_once(mocker):
     error_queue = SimpleMultiprocessingQueue()
     p = GenericProcess(error_queue)
     spied_is_stopped = mocker.spy(p, "is_stopped")
-    p.run(run_once=True)
+    p.run(num_iterations=1)
     spied_is_stopped.assert_called_once()
+
+
+@pytest.mark.timeout(2)  # set a timeout because the test can hang as a failure mode
+def test_GenericProcess__run_can_be_executed_just_four_cycles(mocker):
+    error_queue = SimpleMultiprocessingQueue()
+    p = GenericProcess(error_queue)
+    spied_is_stopped = mocker.spy(p, "is_stopped")
+    p.run(num_iterations=4)
+    assert spied_is_stopped.call_count == 4
 
 
 def test_GenericProcess_run_calls___commands_for_each_run_iteration(mocker):
