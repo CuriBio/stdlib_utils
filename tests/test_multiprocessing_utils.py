@@ -96,7 +96,7 @@ def test_GenericProcess__queue_is_populated_with_error_occuring_during_run__and_
     p.run()
     assert error_queue.empty() is False
     assert spied_stop.call_count == 1
-    actual_error = error_queue.get()
+    actual_error, _ = error_queue.get()
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
@@ -107,17 +107,16 @@ class GenericProcessThatRasiesError(GenericProcess):
         raise ValueError("test message")
 
 
-def test_GenericProcess__queue_is_populated_with_error_occuring_during_live_spawned_run(
-    mocker,
-):
+def test_GenericProcess__queue_is_populated_with_error_occuring_during_live_spawned_run():
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
     p = GenericProcessThatRasiesError(error_queue)
     p.start()
     p.join()
     assert error_queue.empty() is False
-    actual_error = error_queue.get()
+    actual_error, actual_stack_trace = error_queue.get()
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
     assert p.exitcode == 0  # When errors are handled, the error code is 0
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
+    assert 'raise ValueError("test message")' in actual_stack_trace

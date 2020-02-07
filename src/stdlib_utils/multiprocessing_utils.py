@@ -5,6 +5,7 @@ from multiprocessing import Event
 from multiprocessing import Process
 import multiprocessing.queues
 import queue
+import traceback
 from typing import Optional
 
 
@@ -61,7 +62,17 @@ class GenericProcess(Process):
             try:
                 self._commands_for_each_run_iteration()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-                self._fatal_error_reporter.put(e)
+
+                # format the stack trace (Eli 2/7/20 couldn't figure out a way to get the stack trace from the exception itself once it had passed back into the main process, so need to grab it explicitly here) https://stackoverflow.com/questions/4564559/get-exception-description-and-stack-trace-which-caused-an-exception-all-as-a-st
+                stack = traceback.extract_stack()[:-3] + traceback.extract_tb(
+                    e.__traceback__
+                )  # add limit=??
+                pretty = traceback.format_list(stack)
+                formatted_stack_trace = "".join(pretty) + "\n  {} {}".format(
+                    e.__class__, e
+                )
+
+                self._fatal_error_reporter.put((e, formatted_stack_trace))
                 self.stop()
             if self.is_preparing_for_soft_stop() and self.process_can_be_soft_stopped:
                 self.stop()
