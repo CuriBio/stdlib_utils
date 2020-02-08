@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Controlling communication with the OpalKelly FPGA Boards."""
+import logging
 import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Process
@@ -41,6 +42,9 @@ class GenericProcess(Process):
         self._fatal_error_reporter = fatal_error_reporter
         self.process_can_be_soft_stopped = True
         self._soft_stop_event = Event()
+
+    def get_fatal_error_reporter(self) -> SimpleMultiprocessingQueue:
+        return self._fatal_error_reporter
 
     def run(self, num_iterations: Optional[int] = None):
         """Run the process.
@@ -104,3 +108,20 @@ class GenericProcess(Process):
 
     def is_preparing_for_soft_stop(self):
         return self._soft_stop_event.is_set()
+
+
+def invoke_process_run_and_check_errors(
+    the_process: GenericProcess, num_iterations: int = 1
+):
+    """Call the run method of a process and raise any errors.
+
+    This is often useful in unit testing. This should only be used on
+    processes that have not been started.
+    """
+    the_process.run(num_iterations=num_iterations)
+    try:
+        err, formatted_traceback = the_process.get_fatal_error_reporter().get_nowait()
+        logging.exception(formatted_traceback)
+        raise err
+    except queue.Empty:
+        pass

@@ -11,6 +11,7 @@ from .misc import is_system_windows
 from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import GenericProcess
+from .multiprocessing_utils import invoke_process_run_and_check_errors
 from .multiprocessing_utils import SimpleMultiprocessingQueue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
@@ -26,6 +27,7 @@ __all__ = [
     "misc",
     "GenericProcess",
     "SimpleMultiprocessingQueue",
+    "invoke_process_run_and_check_errors",
     "ports",
     "confirm_port_in_use",
     "confirm_port_available",
