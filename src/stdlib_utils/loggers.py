@@ -15,13 +15,13 @@ def configure_logging(log_file_prefix: Optional[str] = None) -> None:
     """Apply standard configuration to logging.
 
     Args:
-        log_file_prefix: if set, will write logs to file in a subfolder (logs)
+        log_file_prefix: if set, will write logs to file in a subfolder (logs). By default it will create a subfolder in the current working directory (if running from source) or in the path that the EXE was installed to for pyinstaller.
     """
     logging.Formatter.converter = time.gmtime  # ensure all logging timestamps are UTC
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [stdout_handler]
     if log_file_prefix is not None:
-        log_folder = resource_path("logs")
+        log_folder = resource_path("logs", base_path=os.getcwd())
         create_directory_if_not_exists(log_folder)
         file_handler = logging.FileHandler(
             os.path.join(

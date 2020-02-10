@@ -50,7 +50,7 @@ def test_configure_logging__with_file_name__creates_dir_using_resource_path(mock
         mocked_basic_config = mocker.patch.object(logging, "basicConfig", autospec=True)
         configure_logging(log_file_prefix="my_log")
 
-        spied_resource_path.assert_called_once_with("logs")
+        spied_resource_path.assert_called_once_with("logs", base_path=os.getcwd())
         spied_create_dir.assert_called_once_with(os.path.join(tmp_dir, "logs"))
 
         assert mocked_basic_config.call_count == 1
