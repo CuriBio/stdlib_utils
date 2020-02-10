@@ -4,8 +4,10 @@ import functools
 import inspect
 import os
 import signal
+import tempfile
 import time
 
+from stdlib_utils import create_directory_if_not_exists
 from stdlib_utils import is_system_windows
 from stdlib_utils import misc
 from stdlib_utils import raise_alarm_signal
@@ -108,3 +110,19 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
         assert a_list[0] is True
     # make sure it was done in a windows-compatible way
     mocked_cdll.assert_called_once_with("ucrtbase")
+
+
+def test_create_directory_if_not_exists__when_no_directory_present():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        the_dir = os.path.join(tmp_dir, "logs")
+        create_directory_if_not_exists(the_dir)
+        assert os.path.isdir(the_dir) is True
+
+
+def test_create_directory_if_not_exists__when_directory_already_present():
+    # would raise a FileExistsError if failing
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        the_dir = os.path.join(tmp_dir, "logs")
+        os.makedirs(the_dir)
+        create_directory_if_not_exists(the_dir)
+        assert os.path.isdir(the_dir) is True

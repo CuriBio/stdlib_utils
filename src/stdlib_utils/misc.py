@@ -65,3 +65,8 @@ def raise_alarm_signal():
         c_raise(14)
     else:
         signal.setitimer(signal.ITIMER_REAL, 0.001)
+
+
+def create_directory_if_not_exists(the_dir: str) -> None:
+    if not os.path.exists(the_dir):
+        os.makedirs(the_dir)
