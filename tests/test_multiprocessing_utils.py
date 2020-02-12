@@ -5,6 +5,7 @@ import queue
 
 import pytest
 from stdlib_utils import GenericProcess
+from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import SimpleMultiprocessingQueue
 
@@ -52,6 +53,19 @@ def test_GenericProcess_can_be_run_and_soft_stopped():
     p.join()
     assert p.is_alive() is False
     assert p.exitcode == 0
+
+
+class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):
+    def _commands_for_each_run_iteration(self):
+        self._process_can_be_soft_stopped = False
+
+
+def test_InfiniteProcess__will_not_soft_stop_when_told_not_to():
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcessThatCannotBeSoftStopped(error_queue)
+    p.soft_stop()
+    p.run(num_iterations=1)
+    assert p.is_stopped() is False
 
 
 @pytest.mark.timeout(2)  # set a timeout because the test can hang as a failure mode
@@ -117,6 +131,7 @@ def test_GenericProcess__queue_is_populated_with_error_occuring_during_live_spaw
     p.join()
     assert error_queue.empty() is False
     actual_error, actual_stack_trace = error_queue.get()
+
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
     assert p.exitcode == 0  # When errors are handled, the error code is 0

@@ -6,8 +6,10 @@ from multiprocessing import Event
 from multiprocessing import Process
 import multiprocessing.queues
 import queue
-import traceback
 from typing import Optional
+
+from .misc import get_formatted_stack_trace
+from .parallelism_utils import InfiniteLoopingParallelismMixIn
 
 
 class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
@@ -27,7 +29,7 @@ class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
         return self.get()
 
 
-class GenericProcess(Process):
+class GenericProcess(InfiniteLoopingParallelismMixIn, Process):
     """Process with some enhanced functionality.
 
     Because of the more explict error reporting/handling during the run method, the Process.exitcode value will still be 0 when the process exits after handling an error.
@@ -40,74 +42,22 @@ class GenericProcess(Process):
         super().__init__()
         self._stop_event = Event()
         self._fatal_error_reporter = fatal_error_reporter
-        self.process_can_be_soft_stopped = True
+        self._process_can_be_soft_stopped = True
         self._soft_stop_event = Event()
 
     def get_fatal_error_reporter(self) -> SimpleMultiprocessingQueue:
         return self._fatal_error_reporter
 
+    def _report_fatal_error(self, the_err: Exception) -> None:
+        formatted_stack_trace = get_formatted_stack_trace(the_err)
+        self._fatal_error_reporter.put((the_err, formatted_stack_trace))
+
     def run(self, num_iterations: Optional[int] = None):
-        """Run the process.
+        # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
+        super().run(num_iterations=num_iterations)
 
-        Args:
-            num_iterations: typically used for unit testing to just execute one or a few cycles. if left as None will loop infinitely
-            run_once: typically used for unit testing to just execute one cycle
 
-        This sets up the basic flow control and error handling.
-        Subclasses should implement functionality to be executed each
-        cycle in the _commands_for_each_run_iteration method.
-        """
-        # pylint: disable=arguments-differ
-        if num_iterations is None:
-            num_iterations = -1
-        completed_iterations = 0
-        while True:
-            self.process_can_be_soft_stopped = True
-            try:
-                self._commands_for_each_run_iteration()
-            except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-
-                # format the stack trace (Eli 2/7/20 couldn't figure out a way to get the stack trace from the exception itself once it had passed back into the main process, so need to grab it explicitly here) https://stackoverflow.com/questions/4564559/get-exception-description-and-stack-trace-which-caused-an-exception-all-as-a-st
-                stack = traceback.extract_stack()[:-3] + traceback.extract_tb(
-                    e.__traceback__
-                )  # add limit=??
-                pretty = traceback.format_list(stack)
-                formatted_stack_trace = "".join(pretty) + "\n  {} {}".format(
-                    e.__class__, e
-                )
-
-                self._fatal_error_reporter.put((e, formatted_stack_trace))
-                self.stop()
-            if self.is_preparing_for_soft_stop() and self.process_can_be_soft_stopped:
-                self.stop()
-
-            if self.is_stopped():
-                # Having the check for is_stopped after the first iteration of run allows easier unit testing.
-                break
-            completed_iterations += 1
-            if completed_iterations == num_iterations:
-                break
-
-    def _commands_for_each_run_iteration(self):
-        """Execute additional commands inside the run loop."""
-
-    def stop(self):
-        """Safely stops the process."""
-        self._stop_event.set()
-
-    def soft_stop(self):
-        """Stop the process when the process indicates it is OK to do so.
-
-        Typically useful for unit testing. For example waiting until all
-        queued up items have been handled.
-        """
-        self._soft_stop_event.set()
-
-    def is_stopped(self):
-        return self._stop_event.is_set()
-
-    def is_preparing_for_soft_stop(self):
-        return self._soft_stop_event.is_set()
+InfiniteProcess = GenericProcess  # alias for planned future name change
 
 
 def invoke_process_run_and_check_errors(

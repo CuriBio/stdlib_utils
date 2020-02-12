@@ -8,6 +8,7 @@ import tempfile
 import time
 
 from stdlib_utils import create_directory_if_not_exists
+from stdlib_utils import get_formatted_stack_trace
 from stdlib_utils import is_system_windows
 from stdlib_utils import misc
 from stdlib_utils import raise_alarm_signal
@@ -126,3 +127,14 @@ def test_create_directory_if_not_exists__when_directory_already_present():
         os.makedirs(the_dir)
         create_directory_if_not_exists(the_dir)
         assert os.path.isdir(the_dir) is True
+
+
+def test_get_formatted_stack_trace():
+    expected_error = ValueError("test message")
+    the_err = None
+    try:
+        raise expected_error
+    except ValueError as e:
+        the_err = e
+    actual_stack_trace = get_formatted_stack_trace(the_err)
+    assert "raise expected_error" in actual_stack_trace
