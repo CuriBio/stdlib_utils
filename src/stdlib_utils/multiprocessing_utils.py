@@ -7,9 +7,10 @@ from multiprocessing import Process
 import multiprocessing.queues
 import queue
 from typing import Optional
+from typing import Tuple
 
 from .misc import get_formatted_stack_trace
-from .parallelism_utils import InfiniteLoopingParallelismMixIn
+from .parallelism_framework import InfiniteLoopingParallelismMixIn
 
 
 class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
@@ -29,7 +30,7 @@ class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
         return self.get()
 
 
-class GenericProcess(InfiniteLoopingParallelismMixIn, Process):
+class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
     """Process with some enhanced functionality.
 
     Because of the more explict error reporting/handling during the run method, the Process.exitcode value will still be 0 when the process exits after handling an error.
@@ -56,22 +57,8 @@ class GenericProcess(InfiniteLoopingParallelismMixIn, Process):
         # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
         super().run(num_iterations=num_iterations)
 
-
-InfiniteProcess = GenericProcess  # alias for planned future name change
-
-
-def invoke_process_run_and_check_errors(
-    the_process: GenericProcess, num_iterations: int = 1
-):
-    """Call the run method of a process and raise any errors.
-
-    This is often useful in unit testing. This should only be used on
-    processes that have not been started.
-    """
-    the_process.run(num_iterations=num_iterations)
-    try:
-        err, formatted_traceback = the_process.get_fatal_error_reporter().get_nowait()
+    @staticmethod
+    def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:
+        err, formatted_traceback = error_info
         logging.exception(formatted_traceback)
         raise err
-    except queue.Empty:
-        pass

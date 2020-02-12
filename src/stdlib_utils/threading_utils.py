@@ -4,7 +4,7 @@ import queue
 import threading
 from typing import Optional
 
-from .parallelism_utils import InfiniteLoopingParallelismMixIn
+from .parallelism_framework import InfiniteLoopingParallelismMixIn
 
 
 class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):

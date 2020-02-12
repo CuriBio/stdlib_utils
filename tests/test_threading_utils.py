@@ -6,6 +6,9 @@ import pytest
 from stdlib_utils import get_formatted_stack_trace
 from stdlib_utils import InfiniteThread
 
+from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
+from .fixtures_parallelism import InfiniteThreadThatRasiesError
+
 
 def test_InfiniteThread__init__calls_super(mocker):
     error_queue = queue.Queue()
@@ -35,11 +38,6 @@ def test_InfiniteThread_can_be_run_and_soft_stopped():
     t.join()
     assert error_queue.empty() is True
     assert t.is_alive() is False
-
-
-class InfiniteThreadThatCannotBeSoftStopped(InfiniteThread):
-    def _commands_for_each_run_iteration(self):
-        self._process_can_be_soft_stopped = False
 
 
 def test_InfiniteThread__will_not_soft_stop_when_told_not_to():
@@ -97,11 +95,6 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
-
-
-class InfiniteThreadThatRasiesError(InfiniteThread):
-    def _commands_for_each_run_iteration(self):
-        raise ValueError("test message")
 
 
 def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spawned_run():
