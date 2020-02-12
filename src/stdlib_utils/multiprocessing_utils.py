@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Controlling communication with the OpalKelly FPGA Boards."""
+"""Utilities for multiprocessing."""
 import logging
 import multiprocessing
 from multiprocessing import Event
@@ -30,6 +30,7 @@ class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
         return self.get()
 
 
+# pylint: disable=duplicate-code
 class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
     """Process with some enhanced functionality.
 
@@ -38,6 +39,8 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
     Args:
         fatal_error_reporter: set up as a queue to be thread/process safe. If any error is unhandled during run, it is fed into this queue so that calling thread can know the full details about the problem in this process.
     """
+
+    # pylint: disable=duplicate-code
 
     def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue):
         super().__init__()
@@ -53,9 +56,22 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         formatted_stack_trace = get_formatted_stack_trace(the_err)
         self._fatal_error_reporter.put((the_err, formatted_stack_trace))
 
-    def run(self, num_iterations: Optional[int] = None):
+    # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+    def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        self,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        num_iterations: Optional[  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+            int  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        ] = None,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        perform_setup_before_loop: bool = True,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        perform_teardown_after_loop: bool = True,
+    ):  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
-        super().run(num_iterations=num_iterations)
+        # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        super().run(
+            num_iterations=num_iterations,
+            perform_setup_before_loop=perform_setup_before_loop,
+            perform_teardown_after_loop=perform_teardown_after_loop,
+        )
 
     @staticmethod
     def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:

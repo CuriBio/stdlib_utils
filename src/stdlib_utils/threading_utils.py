@@ -30,6 +30,17 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
     def get_fatal_error_reporter(self) -> queue.Queue:
         return self._fatal_error_reporter
 
-    def run(self, num_iterations: Optional[int] = None):
+    # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+    def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        self,
+        num_iterations: Optional[int] = None,
+        perform_setup_before_loop: bool = True,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        perform_teardown_after_loop: bool = True,
+    ):  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
-        super().run(num_iterations=num_iterations)
+        # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        super().run(
+            num_iterations=num_iterations,
+            perform_setup_before_loop=perform_setup_before_loop,
+            perform_teardown_after_loop=perform_teardown_after_loop,
+        )

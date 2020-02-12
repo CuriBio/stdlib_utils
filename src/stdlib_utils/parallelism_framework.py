@@ -27,7 +27,24 @@ class InfiniteLoopingParallelismMixIn:
     def _report_fatal_error(self, the_err: Exception) -> None:
         self._fatal_error_reporter.put(the_err)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
 
-    def run(self, num_iterations: Optional[int] = None):
+    def _setup_before_loop(self) -> None:
+        """Perform any necessary setup prior to initiating the infinite loop.
+
+        This can be overridden by the subclass.
+        """
+
+    def _teardown_after_loop(self) -> None:
+        """Perform any necessary teardown after the infinite loop has exited.
+
+        This can be overridden by the subclass.
+        """
+
+    def run(
+        self,
+        num_iterations: Optional[int] = None,
+        perform_setup_before_loop: bool = True,
+        perform_teardown_after_loop: bool = True,
+    ):
         """Run the thread.
 
         Args:
@@ -40,6 +57,12 @@ class InfiniteLoopingParallelismMixIn:
         if num_iterations is None:
             num_iterations = -1
         completed_iterations = 0
+        if perform_setup_before_loop:
+            try:
+                self._setup_before_loop()
+            except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                self._report_fatal_error(e)
+                return
         while True:
             self._process_can_be_soft_stopped = True
             try:
@@ -56,6 +79,11 @@ class InfiniteLoopingParallelismMixIn:
             completed_iterations += 1
             if completed_iterations == num_iterations:
                 break
+        if perform_teardown_after_loop:
+            try:
+                self._teardown_after_loop()
+            except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                self._report_fatal_error(e)
 
     def _commands_for_each_run_iteration(self):
         """Execute additional commands inside the run loop."""

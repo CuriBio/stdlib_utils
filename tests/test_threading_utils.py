@@ -111,33 +111,20 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spaw
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
     assert 'raise ValueError("test message")' in actual_stack_trace
 
-    # e=actual_error
-    # stack = traceback.extract_stack()[:-3] + traceback.extract_tb(
-    #     e.__traceback__
-    # )  # add limit=??
-    # pretty = traceback.format_list(stack)
-    # formatted_stack_trace = "".join(pretty) + "\n  {} {}".format(
-    #     e.__class__, e
-    # )
-    # print (formatted_stack_trace)
+
+def test_InfiniteThread__calls_setup_before_loop(mocker):
+    error_queue = queue.Queue()
+    t = InfiniteThread(error_queue)
+    spied_setup = mocker.spy(t, "_setup_before_loop")
+    t.run(num_iterations=1)
+    assert error_queue.empty() is True
+    assert spied_setup.call_count == 1
 
 
-# def test_invoke_process_run_and_check_errors__passes_values(mocker):
-#     error_queue = SimpleMultiprocessingQueue()
-#     p = InfiniteThread(error_queue)
-#     spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
-#     invoke_process_run_and_check_errors(p)  # runs once by default
-#     assert spied_run.call_count == 1
-
-#     invoke_process_run_and_check_errors(p, num_iterations=2)
-#     assert spied_run.call_count == 3
-
-
-# def test_invoke_process_run_and_check_errors__raises_and_logs_error(mocker):
-#     error_queue = SimpleMultiprocessingQueue()
-#     p = InfiniteThreadThatRasiesError(error_queue)
-#     mocked_log = mocker.patch.object(logging, "exception", autospec=True)
-#     with pytest.raises(ValueError, match="test message"):
-#         invoke_process_run_and_check_errors(p)
-#     assert error_queue.empty() is True  # the error should have been popped off the queu
-#     assert mocked_log.call_count == 1
+def test_InfiniteThread__calls_teardown_after_loop(mocker):
+    error_queue = queue.Queue()
+    t = InfiniteThread(error_queue)
+    spied_teardown = mocker.spy(t, "_teardown_after_loop")
+    t.run(num_iterations=1)
+    assert error_queue.empty() is True
+    assert spied_teardown.call_count == 1

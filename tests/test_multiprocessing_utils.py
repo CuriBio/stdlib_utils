@@ -127,3 +127,58 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spa
     assert p.exitcode == 0  # When errors are handled, the error code is 0
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
     assert 'raise ValueError("test message")' in actual_stack_trace
+
+
+def test_InfiniteProcess__calls_setup_before_loop(mocker):
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+    spied_setup = mocker.spy(p, "_setup_before_loop")
+    p.run(num_iterations=1)
+    assert error_queue.empty() is True
+    assert spied_setup.call_count == 1
+
+
+def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_iteration_or_teardown(
+    mocker,
+):
+    expected_error = ValueError("error during setup")
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+    spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
+    spied_teardown = mocker.spy(p, "_teardown_after_loop")
+    mocked_setup = mocker.patch.object(
+        p, "_setup_before_loop", autospec=True, side_effect=expected_error
+    )
+    p.run(num_iterations=1)
+    assert error_queue.empty() is False
+    actual_error, _ = error_queue.get_nowait()
+    assert mocked_setup.call_count == 1
+    assert spied_run.call_count == 0
+    assert spied_teardown.call_count == 0
+    assert isinstance(actual_error, type(expected_error))
+    assert str(actual_error) == str(expected_error)
+
+
+def test_InfiniteProcess__calls_teardown_after_loop(mocker):
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+    spied_teardown = mocker.spy(p, "_teardown_after_loop")
+    p.run(num_iterations=1)
+    assert error_queue.empty() is True
+    assert spied_teardown.call_count == 1
+
+
+def test_InfiniteProcess__catches_error_in_teardown_after(mocker):
+    expected_error = ValueError("error during teardown")
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+
+    mocked_teardown = mocker.patch.object(
+        p, "_teardown_after_loop", autospec=True, side_effect=expected_error
+    )
+    p.run(num_iterations=1)
+    assert mocked_teardown.call_count == 1
+    assert error_queue.empty() is False
+    actual_error, _ = error_queue.get_nowait()
+    assert isinstance(actual_error, type(expected_error))
+    assert str(actual_error) == str(expected_error)
