@@ -24,10 +24,15 @@ def get_path_to_frozen_bundle() -> str:
     Eli (12/20/19) cannot figure out how to mock sys, so this is not
     unit tested.
     """
-    return getattr(sys, "_MEIPASS")
+    path_to_bundle = getattr(sys, "_MEIPASS")
+    if not isinstance(path_to_bundle, str):
+        raise NotImplementedError(
+            "The _MEIPASS sys attribute should always be a string."
+        )
+    return path_to_bundle
 
 
-def resource_path(relative_path: str, base_path: Optional[str] = None):
+def resource_path(relative_path: str, base_path: Optional[str] = None) -> str:
     """Get a path to a resource that works for development and frozen files.
 
     Args:
@@ -52,7 +57,7 @@ def is_system_windows() -> bool:
     return system_type == "nt"
 
 
-def raise_alarm_signal():
+def raise_alarm_signal() -> None:
     """Raise signal in a UNIX and Windows compatible manner.
 
     Raises signal.SIGALRM which may not exist on windows, but is 14 as

@@ -6,6 +6,7 @@ from multiprocessing import Event
 from multiprocessing import Process
 import multiprocessing.queues
 import queue
+from typing import Any
 from typing import Optional
 from typing import Tuple
 
@@ -13,17 +14,17 @@ from .misc import get_formatted_stack_trace
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 
 
-class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):
+class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why SimpleQueue doesn't have type arguments defined in the stdlib(?)
     """Some additional basic functionality.
 
     Since SimpleQueue is not technically a class, there are some tricks to subclassing it: https://stackoverflow.com/questions/39496554/cannot-subclass-multiprocessing-queue-in-python-3-5
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         ctx = multiprocessing.get_context()
         super().__init__(ctx=ctx)
 
-    def get_nowait(self):
+    def get_nowait(self) -> Any:
         """Get value or raise error if empty."""
         if self.empty():
             raise queue.Empty()
@@ -42,7 +43,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     # pylint: disable=duplicate-code
 
-    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue):
+    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue) -> None:
         super().__init__()
         self._stop_event = Event()
         self._fatal_error_reporter = fatal_error_reporter
@@ -64,7 +65,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         ] = None,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         perform_setup_before_loop: bool = True,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         perform_teardown_after_loop: bool = True,
-    ):  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+    ) -> None:  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
         # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         super().run(
