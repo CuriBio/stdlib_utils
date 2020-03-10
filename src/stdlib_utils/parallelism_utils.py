@@ -13,7 +13,7 @@ def invoke_process_run_and_check_errors(
     the_process: InfiniteLoopingParallelismMixIn,
     num_iterations: int = 1,
     perform_setup_before_loop: bool = False,
-):
+) -> None:
     """Call the run method of a process and raise any errors.
 
     This is often useful in unit testing. This should only be used on

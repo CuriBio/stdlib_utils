@@ -6,6 +6,8 @@ multiprocessing_utils. This module provides a framework for those
 modules.
 """
 import logging
+import multiprocessing.synchronize
+import threading
 from typing import Any
 from typing import Optional
 
@@ -44,7 +46,7 @@ class InfiniteLoopingParallelismMixIn:
         num_iterations: Optional[int] = None,
         perform_setup_before_loop: bool = True,
         perform_teardown_after_loop: bool = True,
-    ):
+    ) -> None:
         """Run the thread.
 
         Args:
@@ -85,23 +87,59 @@ class InfiniteLoopingParallelismMixIn:
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
                 self._report_fatal_error(e)
 
-    def _commands_for_each_run_iteration(self):
+    def _commands_for_each_run_iteration(self) -> None:
         """Execute additional commands inside the run loop."""
 
-    def stop(self):
+    def stop(self) -> None:
         """Safely stops the process."""
-        self._stop_event.set()
+        if not hasattr(self, "_stop_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _stop_event attribute."
+            )
+        stop_event = getattr(self, "_stop_event")
 
-    def soft_stop(self):
+        stop_event.set()
+
+    def soft_stop(self) -> None:
         """Stop the process when the process indicates it is OK to do so.
 
         Typically useful for unit testing. For example waiting until all
         queued up items have been handled.
         """
-        self._soft_stop_event.set()
+        if not hasattr(self, "_soft_stop_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _soft_stop_event attribute."
+            )
+        soft_stop_event = getattr(self, "_soft_stop_event")
 
-    def is_stopped(self):
-        return self._stop_event.is_set()
+        soft_stop_event.set()
 
-    def is_preparing_for_soft_stop(self):
-        return self._soft_stop_event.is_set()
+    def is_stopped(self) -> bool:
+        """Check if the parallel instance is stopped."""
+        if not hasattr(self, "_stop_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _stop_event attribute."
+            )
+        stop_event = getattr(self, "_stop_event")
+
+        is_set = stop_event.is_set()
+        if not isinstance(is_set, bool):
+            raise NotImplementedError(
+                "The return value from this should always be a bool."
+            )
+        return is_set
+
+    def is_preparing_for_soft_stop(self) -> bool:
+        """Check if the parallel instance is preparing to soft stop."""
+        if not hasattr(self, "_soft_stop_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _soft_stop_event attribute."
+            )
+        soft_stop_event = getattr(self, "_soft_stop_event")
+        if not isinstance(
+            soft_stop_event, (threading.Event, multiprocessing.synchronize.Event)
+        ):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _soft_stop_event as either a threading.Event or multiprocessing.Event"
+            )
+        return soft_stop_event.is_set()
