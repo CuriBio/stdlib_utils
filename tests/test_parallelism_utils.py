@@ -5,6 +5,7 @@ import queue
 import pytest
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
+from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
@@ -63,3 +64,24 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
         error_queue.empty() is True
     )  # the error should have been popped off the queue
     assert mocked_log.call_count == 1
+
+
+def test_put_log_message_into_queue__puts_message_in_when_at_threshold():
+    q = queue.Queue()
+    msg = "hey"
+    put_log_message_into_queue(logging.INFO, msg, q, logging.INFO)
+    assert q.get_nowait() == msg
+
+
+def test_put_log_message_into_queue__puts_message_in_when_above_threshold():
+    q = queue.Queue()
+    msg = "hey jude"
+    put_log_message_into_queue(logging.ERROR, msg, q, logging.WARNING)
+    assert q.get_nowait() == msg
+
+
+def test_put_log_message_into_queue__does_not_put_message_in_when_below_threshold():
+    q = queue.Queue()
+    msg = "hey there"
+    put_log_message_into_queue(logging.DEBUG, msg, q, logging.INFO)
+    assert q.empty() is True
