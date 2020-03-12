@@ -26,12 +26,17 @@ class InfiniteLoopingParallelismMixIn:
         logging_level: int,
         stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
         soft_stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
+        self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
+
+    def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
+        return self._minimum_iteration_duration_seconds
 
     def get_logging_level(self) -> int:
         return self._logging_level

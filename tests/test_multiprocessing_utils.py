@@ -52,8 +52,21 @@ def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_
     p = InfiniteProcess(error_queue)
     # mocked_init.assert_called_once_with(p, error_queue, logging.INFO,MockAny(multiprocessing.Event),MockAny(multiprocessing.Event))
     mocked_init.assert_called_once_with(
-        p, error_queue, logging.INFO, mock.ANY, mock.ANY
+        p,
+        error_queue,
+        logging.INFO,
+        mock.ANY,
+        mock.ANY,
+        minimum_iteration_duration_seconds=0.01,
     )
+
+
+def test_InfiniteProcess_can_set_minimum_iteration_duration():
+
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue, minimum_iteration_duration_seconds=0.22)
+
+    assert p.get_minimum_iteration_duration_seconds() == 0.22
 
 
 def test_InfiniteProcess_internal_logging_level_can_be_set():

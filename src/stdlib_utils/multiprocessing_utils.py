@@ -11,6 +11,7 @@ import queue
 from typing import Any
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
@@ -49,10 +50,16 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         self,
         fatal_error_reporter: SimpleMultiprocessingQueue,
         logging_level: int = logging.INFO,
+        minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         Process.__init__(self)
         InfiniteLoopingParallelismMixIn.__init__(
-            self, fatal_error_reporter, logging_level, Event(), Event()
+            self,
+            fatal_error_reporter,
+            logging_level,
+            Event(),
+            Event(),
+            minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
         )
 
         # self._stop_event = Event()
