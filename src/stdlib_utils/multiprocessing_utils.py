@@ -75,7 +75,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         )
 
     @staticmethod
-    def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:
+    def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:  # type: ignore[override] # noqa: F821 # we are not calling the super function here, we are completely overriding the type of object it accepts
         err, formatted_traceback = error_info
         logging.exception(formatted_traceback)
         raise err

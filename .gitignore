@@ -22,6 +22,19 @@ docs/build
 tests/**/snapshots/*_actual.png
 tests/**/snapshots/*_diff.png
 
+# test coverage
+tests/__coverage__
+test/__coverage__
+coverage-report-pytest
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+
+# test profiling
+prof/
+
+
 # Local files
 downloads/
 pipeline_outputs/

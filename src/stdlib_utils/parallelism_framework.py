@@ -8,7 +8,6 @@ modules.
 import logging
 import multiprocessing.synchronize
 import threading
-from typing import Any
 from typing import Optional
 
 from .misc import get_formatted_stack_trace
@@ -18,10 +17,12 @@ class InfiniteLoopingParallelismMixIn:
     """Mix-in for infinite looping."""
 
     @staticmethod
-    def log_and_raise_error_from_reporter(error_info: Any) -> None:
+    def log_and_raise_error_from_reporter(error_info: Exception) -> None:
         err = error_info
         if not isinstance(err, Exception):
-            raise TypeError("Error in the code, this should never happen.")
+            raise NotImplementedError(
+                "Error in the code, this should always be an Exception."
+            )
         formatted_traceback = get_formatted_stack_trace(err)
         logging.exception(formatted_traceback)
         raise err

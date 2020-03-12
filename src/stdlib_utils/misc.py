@@ -18,7 +18,7 @@ def is_frozen_as_exe() -> bool:
     return hasattr(sys, "_MEIPASS")
 
 
-def get_path_to_frozen_bundle() -> str:
+def get_path_to_frozen_bundle() -> str:  # pragma: no cover
     """Return path to the running bundle made by PyInstaller.
 
     Eli (12/20/19) cannot figure out how to mock sys, so this is not
