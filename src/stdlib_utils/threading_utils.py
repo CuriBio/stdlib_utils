@@ -25,12 +25,16 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
     ) -> None:
         threading.Thread.__init__(self)
         InfiniteLoopingParallelismMixIn.__init__(
-            self, fatal_error_reporter, logging_level
+            self,
+            fatal_error_reporter,
+            logging_level,
+            threading.Event(),
+            threading.Event(),
         )
         self._lock = lock
-        self._stop_event = threading.Event()
+        # self._stop_event = threading.Event()
 
-        self._soft_stop_event = threading.Event()
+        # self._soft_stop_event = threading.Event()
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined

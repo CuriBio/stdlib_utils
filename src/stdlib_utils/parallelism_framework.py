@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing
 import multiprocessing.queues
 import multiprocessing.synchronize
 import queue
@@ -23,8 +24,11 @@ class InfiniteLoopingParallelismMixIn:
             queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
         ],
         logging_level: int,
+        stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        soft_stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
     ) -> None:
-
+        self._stop_event = stop_event
+        self._soft_stop_event = soft_stop_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level

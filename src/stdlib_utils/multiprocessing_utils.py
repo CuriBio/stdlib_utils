@@ -52,12 +52,12 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
     ) -> None:
         Process.__init__(self)
         InfiniteLoopingParallelismMixIn.__init__(
-            self, fatal_error_reporter, logging_level
+            self, fatal_error_reporter, logging_level, Event(), Event()
         )
 
-        self._stop_event = Event()
+        # self._stop_event = Event()
 
-        self._soft_stop_event = Event()
+        # self._soft_stop_event = Event()
 
     def _report_fatal_error(self, the_err: Exception) -> None:
         formatted_stack_trace = get_formatted_stack_trace(the_err)

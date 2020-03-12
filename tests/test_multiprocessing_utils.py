@@ -2,6 +2,7 @@
 import logging
 from multiprocessing import Process
 import queue
+from unittest import mock
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
@@ -10,6 +11,15 @@ from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
+
+# adapted from https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
+# ...but does not seem to be working as expected
+# def MockAny(cls):
+#     class MockAny(cls):
+#         def __eq__(self, other):
+#             return isinstance(other, cls)
+
+#     return MockAny()
 
 
 def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
@@ -40,7 +50,10 @@ def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_
     mocked_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-    mocked_init.assert_called_once_with(p, error_queue, logging.INFO)
+    # mocked_init.assert_called_once_with(p, error_queue, logging.INFO,MockAny(multiprocessing.Event),MockAny(multiprocessing.Event))
+    mocked_init.assert_called_once_with(
+        p, error_queue, logging.INFO, mock.ANY, mock.ANY
+    )
 
 
 def test_InfiniteProcess_internal_logging_level_can_be_set():

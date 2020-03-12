@@ -2,6 +2,7 @@
 import logging
 import queue
 import threading
+from unittest import mock
 
 import pytest
 from stdlib_utils import get_formatted_stack_trace
@@ -23,7 +24,9 @@ def test_InfiniteThread__init__calls_InfiniteLoopingParallelismMixIn_super(mocke
     error_queue = queue.Queue()
     mocked_super_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     t = InfiniteThread(error_queue)
-    mocked_super_init.assert_called_once_with(t, error_queue, logging.INFO)
+    mocked_super_init.assert_called_once_with(
+        t, error_queue, logging.INFO, mock.ANY, mock.ANY
+    )
 
 
 def test_InfiniteThread_internal_logging_level_can_be_set():
