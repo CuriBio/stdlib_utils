@@ -3,6 +3,7 @@ from multiprocessing import Process
 import queue
 
 import pytest
+from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import SimpleMultiprocessingQueue
 
@@ -25,11 +26,20 @@ def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
         test_queue.get_nowait()
 
 
-def test_InfiniteProcess_super_is_called_during_init(mocker):
+def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
     mocked_init = mocker.patch.object(Process, "__init__")
     error_queue = SimpleMultiprocessingQueue()
-    InfiniteProcess(error_queue)
-    mocked_init.assert_called_once_with()
+    p = InfiniteProcess(error_queue)
+    mocked_init.assert_called_once_with(p)
+
+
+def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_init(
+    mocker,
+):
+    mocked_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+    mocked_init.assert_called_once_with(p, error_queue)
 
 
 def test_InfiniteProcess_can_be_run_and_stopped():

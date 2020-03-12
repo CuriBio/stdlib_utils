@@ -4,17 +4,25 @@ import threading
 
 import pytest
 from stdlib_utils import get_formatted_stack_trace
+from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteThread
 
 from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
 
 
-def test_InfiniteThread__init__calls_super(mocker):
+def test_InfiniteThread__init__calls_Thread_super(mocker):
     error_queue = queue.Queue()
     mocked_super_init = mocker.spy(threading.Thread, "__init__")
-    InfiniteThread(error_queue)
-    assert mocked_super_init.call_count == 1
+    t = InfiniteThread(error_queue)
+    mocked_super_init.assert_called_once_with(t)
+
+
+def test_InfiniteThread__init__calls_InfiniteLoopingParallelismMixIn_super(mocker):
+    error_queue = queue.Queue()
+    mocked_super_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
+    t = InfiniteThread(error_queue)
+    mocked_super_init.assert_called_once_with(t, error_queue)
 
 
 @pytest.mark.timeout(5)

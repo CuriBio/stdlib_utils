@@ -85,13 +85,13 @@ repos:
     -   id: python-check-mock-methods
 
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: '3.7.7'  # pick a git hash / tag to point to
+    rev: '3.7.9'  # pick a git hash / tag to point to
     hooks:
     -   id: flake8
 
 -   repo: https://github.com/PyCQA/pydocstyle
     # black seems to be working on formatting docstrings, but use this for now
-    rev: '4.0.1'  # pick a git hash / tag to point to
+    rev: '5.0.2'  # pick a git hash / tag to point to
     hooks:
     -   id: pydocstyle
         args:

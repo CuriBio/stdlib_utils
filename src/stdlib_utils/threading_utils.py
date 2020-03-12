@@ -21,16 +21,13 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
         fatal_error_reporter: queue.Queue,  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why queue.Queue doesn't have type arguments defined in the stdlib(?)
         lock: Optional[threading.Lock] = None,
     ) -> None:
-        super().__init__()
+        threading.Thread.__init__(self)
+        InfiniteLoopingParallelismMixIn.__init__(self, fatal_error_reporter)
         self._lock = lock
         self._stop_event = threading.Event()
-        self._fatal_error_reporter = fatal_error_reporter
 
         self._process_can_be_soft_stopped: bool
         self._soft_stop_event = threading.Event()
-
-    def get_fatal_error_reporter(self) -> queue.Queue:  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why queue.Queue doesn't have type arguments defined in the stdlib(?)
-        return self._fatal_error_reporter
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined

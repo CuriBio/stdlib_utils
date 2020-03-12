@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utilities for multiprocessing."""
+from __future__ import annotations
+
 import logging
 import multiprocessing
 from multiprocessing import Event
@@ -43,19 +45,23 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     # pylint: disable=duplicate-code
 
-    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue) -> None:
-        super().__init__()
+    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue,) -> None:
+        Process.__init__(self)
+        InfiniteLoopingParallelismMixIn.__init__(self, fatal_error_reporter)
+
         self._stop_event = Event()
-        self._fatal_error_reporter = fatal_error_reporter
+
         self._process_can_be_soft_stopped = True
         self._soft_stop_event = Event()
 
-    def get_fatal_error_reporter(self) -> SimpleMultiprocessingQueue:
-        return self._fatal_error_reporter
-
     def _report_fatal_error(self, the_err: Exception) -> None:
         formatted_stack_trace = get_formatted_stack_trace(the_err)
-        self._fatal_error_reporter.put((the_err, formatted_stack_trace))
+        reporter = self._fatal_error_reporter
+        if not isinstance(reporter, SimpleMultiprocessingQueue):
+            raise NotImplementedError(
+                "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue"
+            )
+        reporter.put((the_err, formatted_stack_trace))
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
