@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Functionality to enhance parallelism.
+"""Functionality to enhance parallelism."""
+from __future__ import annotations
 
-This module should not import from threading_utils or
-multiprocessing_utils. This module provides a framework for those
-modules.
-"""
 import logging
+import multiprocessing
+import multiprocessing.queues
 import multiprocessing.synchronize
+import queue
 import threading
-from typing import Any
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from .misc import get_formatted_stack_trace
 
@@ -17,14 +18,46 @@ from .misc import get_formatted_stack_trace
 class InfiniteLoopingParallelismMixIn:
     """Mix-in for infinite looping."""
 
+    def __init__(
+        self,
+        fatal_error_reporter: Union[
+            queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
+        ],
+        logging_level: int,
+        stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        soft_stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        minimum_iteration_duration_seconds: Union[float, int] = 0.01,
+    ) -> None:
+        self._stop_event = stop_event
+        self._soft_stop_event = soft_stop_event
+        self._fatal_error_reporter = fatal_error_reporter
+        self._process_can_be_soft_stopped = True
+        self._logging_level = logging_level
+        self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
+
+    def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
+        return self._minimum_iteration_duration_seconds
+
+    def get_logging_level(self) -> int:
+        return self._logging_level
+
     @staticmethod
-    def log_and_raise_error_from_reporter(error_info: Any) -> None:
+    def log_and_raise_error_from_reporter(error_info: Exception) -> None:
         err = error_info
         if not isinstance(err, Exception):
-            raise TypeError("Error in the code, this should never happen.")
+            raise NotImplementedError(
+                "Error in the code, this should always be an Exception."
+            )
         formatted_traceback = get_formatted_stack_trace(err)
         logging.exception(formatted_traceback)
         raise err
+
+    def get_fatal_error_reporter(
+        self,
+    ) -> Union[
+        queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
+    ]:
+        return self._fatal_error_reporter
 
     def _report_fatal_error(self, the_err: Exception) -> None:
         self._fatal_error_reporter.put(the_err)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
@@ -51,6 +84,8 @@ class InfiniteLoopingParallelismMixIn:
 
         Args:
             num_iterations: typically used for unit testing to just execute one or a few cycles. if left as None will loop infinitely
+            perform_setup_before_loop: this can be disabled when needed during unit testing
+            perform_teardown_after_loop: this can be disabled when needed during unit testing
 
         This sets up the basic flow control and error handling for the thread.
         Subclasses should implement functionality to be executed during each
@@ -63,6 +98,9 @@ class InfiniteLoopingParallelismMixIn:
             try:
                 self._setup_before_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                print(
+                    e
+                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
                 self._report_fatal_error(e)
                 return
         while True:

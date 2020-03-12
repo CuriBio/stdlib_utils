@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
+import logging
 from multiprocessing import Process
 import queue
+from unittest import mock
 
 import pytest
+from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
+
+# adapted from https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
+# ...but does not seem to be working as expected
+# def MockAny(cls):
+#     class MockAny(cls):
+#         def __eq__(self, other):
+#             return isinstance(other, cls)
+
+#     return MockAny()
 
 
 def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
@@ -25,11 +37,43 @@ def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
         test_queue.get_nowait()
 
 
-def test_InfiniteProcess_super_is_called_during_init(mocker):
+def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
     mocked_init = mocker.patch.object(Process, "__init__")
     error_queue = SimpleMultiprocessingQueue()
-    InfiniteProcess(error_queue)
-    mocked_init.assert_called_once_with()
+    p = InfiniteProcess(error_queue)
+    mocked_init.assert_called_once_with(p)
+
+
+def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_init(
+    mocker,
+):
+    mocked_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue)
+    # mocked_init.assert_called_once_with(p, error_queue, logging.INFO,MockAny(multiprocessing.Event),MockAny(multiprocessing.Event))
+    mocked_init.assert_called_once_with(
+        p,
+        error_queue,
+        logging.INFO,
+        mock.ANY,
+        mock.ANY,
+        minimum_iteration_duration_seconds=0.01,
+    )
+
+
+def test_InfiniteProcess_can_set_minimum_iteration_duration():
+
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue, minimum_iteration_duration_seconds=0.22)
+
+    assert p.get_minimum_iteration_duration_seconds() == 0.22
+
+
+def test_InfiniteProcess_internal_logging_level_can_be_set():
+
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue, logging_level=logging.DEBUG)
+    assert p.get_logging_level() == logging.DEBUG
 
 
 def test_InfiniteProcess_can_be_run_and_stopped():
