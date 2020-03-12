@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from multiprocessing import Process
 import queue
 
@@ -39,7 +40,14 @@ def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_
     mocked_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-    mocked_init.assert_called_once_with(p, error_queue)
+    mocked_init.assert_called_once_with(p, error_queue, logging.INFO)
+
+
+def test_InfiniteProcess_internal_logging_level_can_be_set():
+
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcess(error_queue, logging_level=logging.DEBUG)
+    assert p.get_logging_level() == logging.DEBUG
 
 
 def test_InfiniteProcess_can_be_run_and_stopped():

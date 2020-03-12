@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import queue
 import threading
 
@@ -22,7 +23,13 @@ def test_InfiniteThread__init__calls_InfiniteLoopingParallelismMixIn_super(mocke
     error_queue = queue.Queue()
     mocked_super_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     t = InfiniteThread(error_queue)
-    mocked_super_init.assert_called_once_with(t, error_queue)
+    mocked_super_init.assert_called_once_with(t, error_queue, logging.INFO)
+
+
+def test_InfiniteThread_internal_logging_level_can_be_set():
+    error_queue = queue.Queue()
+    t = InfiniteThread(error_queue, logging_level=logging.DEBUG)
+    assert t.get_logging_level() == logging.DEBUG
 
 
 @pytest.mark.timeout(5)

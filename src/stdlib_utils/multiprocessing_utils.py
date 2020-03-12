@@ -45,13 +45,18 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     # pylint: disable=duplicate-code
 
-    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue,) -> None:
+    def __init__(
+        self,
+        fatal_error_reporter: SimpleMultiprocessingQueue,
+        logging_level: int = logging.INFO,
+    ) -> None:
         Process.__init__(self)
-        InfiniteLoopingParallelismMixIn.__init__(self, fatal_error_reporter)
+        InfiniteLoopingParallelismMixIn.__init__(
+            self, fatal_error_reporter, logging_level
+        )
 
         self._stop_event = Event()
 
-        self._process_can_be_soft_stopped = True
         self._soft_stop_event = Event()
 
     def _report_fatal_error(self, the_err: Exception) -> None:

@@ -22,9 +22,15 @@ class InfiniteLoopingParallelismMixIn:
         fatal_error_reporter: Union[
             queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
         ],
+        logging_level: int,
     ) -> None:
 
         self._fatal_error_reporter = fatal_error_reporter
+        self._process_can_be_soft_stopped = True
+        self._logging_level = logging_level
+
+    def get_logging_level(self) -> int:
+        return self._logging_level
 
     @staticmethod
     def log_and_raise_error_from_reporter(error_info: Exception) -> None:
