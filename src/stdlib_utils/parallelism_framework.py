@@ -53,12 +53,6 @@ class InfiniteLoopingParallelismMixIn:
         queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
     ]:
         return self._fatal_error_reporter
-        # reporter = self._fatal_error_reporter
-        # if not isinstance(reporter, SimpleMultiprocessingQueue):
-        #     raise NotImplementedError(
-        #         "The error reporter for infinite processes must be a SimpleMultiprocessingQueue"
-        #     )
-        # return reporter
 
     def _report_fatal_error(self, the_err: Exception) -> None:
         self._fatal_error_reporter.put(the_err)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
@@ -99,6 +93,9 @@ class InfiniteLoopingParallelismMixIn:
             try:
                 self._setup_before_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                print(
+                    e
+                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
                 self._report_fatal_error(e)
                 return
         while True:
