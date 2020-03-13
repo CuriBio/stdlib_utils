@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name="stdlib_utils",
-    version="0.1.13",
+    version="0.1.14",
     description="CREATE A DESCRIPTION",
     url="https://git-codecommit.us-east-1.amazonaws.com/v1/repos/stdlib_utils",
     author="NanoSurface Biomedical",

@@ -8,11 +8,15 @@ import multiprocessing.queues
 import multiprocessing.synchronize
 import queue
 import threading
+import time
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
 from .misc import get_formatted_stack_trace
+
+PRINT_WARNING_MSG = "Caution, this fatal error message is being printed to the console before attempting to be logged. Confirm it is in the log file before closing the console. Screenshot or copy the console to save the error if it is not in the log!"
 
 
 class InfiniteLoopingParallelismMixIn:
@@ -34,6 +38,25 @@ class InfiniteLoopingParallelismMixIn:
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
         self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
+        self._idle_iteration_time_ns = 0
+        self._init_performance_measurements()
+
+    def _init_performance_measurements(self) -> None:
+        # separate to make mocking easier
+        self._reset_performance_measurements()
+
+    def _reset_performance_measurements(self) -> None:
+        self._start_timepoint_of_last_performance_measurement = time.perf_counter_ns()
+        self._idle_iteration_time_ns = 0
+
+    def reset_performance_tracker(self) -> Dict[str, int]:
+        out_dict: Dict[str, int] = {}
+        out_dict[
+            "start_timepoint_of_measurements"
+        ] = self._start_timepoint_of_last_performance_measurement
+        out_dict["idle_iteration_time_ns"] = self._idle_iteration_time_ns
+        self._reset_performance_measurements()
+        return out_dict
 
     def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
         return self._minimum_iteration_duration_seconds
@@ -99,15 +122,19 @@ class InfiniteLoopingParallelismMixIn:
                 self._setup_before_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
                 print(
-                    e
+                    f"{PRINT_WARNING_MSG} {e}"
                 )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
                 self._report_fatal_error(e)
                 return
         while True:
+            start_timepoint_of_iteration = time.perf_counter_ns()
             self._process_can_be_soft_stopped = True
             try:
                 self._commands_for_each_run_iteration()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                print(
+                    f"{PRINT_WARNING_MSG} {e}"
+                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
                 self._report_fatal_error(e)
                 self.stop()
             if self.is_preparing_for_soft_stop() and self._process_can_be_soft_stopped:
@@ -119,11 +146,31 @@ class InfiniteLoopingParallelismMixIn:
             completed_iterations += 1
             if completed_iterations == num_iterations:
                 break
+            # only decide to sleep if there are more iterations to do. this will keep unit tests executing more quickly
+            self._sleep_for_idle_time_during_iteration(start_timepoint_of_iteration)
         if perform_teardown_after_loop:
             try:
                 self._teardown_after_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                print(
+                    f"{PRINT_WARNING_MSG} {e}"
+                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
                 self._report_fatal_error(e)
+
+    def _sleep_for_idle_time_during_iteration(
+        self, start_timepoint_of_iteration: int
+    ) -> None:
+        stop_timepoint_of_iteration = time.perf_counter_ns()
+        iteration_time_ns = stop_timepoint_of_iteration - start_timepoint_of_iteration
+
+        idle_time_ns = (
+            int(self.get_minimum_iteration_duration_seconds() * 10 ** 9)
+            - iteration_time_ns
+        )
+        print(type(idle_time_ns))
+        if idle_time_ns > 0:
+            self._idle_iteration_time_ns += idle_time_ns
+            time.sleep(idle_time_ns / 10 ** 9)
 
     def _commands_for_each_run_iteration(self) -> None:
         """Execute additional commands inside the run loop."""
