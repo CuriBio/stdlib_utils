@@ -11,6 +11,7 @@ from .misc import get_formatted_stack_trace
 from .misc import get_path_to_frozen_bundle
 from .misc import is_frozen_as_exe
 from .misc import is_system_windows
+from .misc import print_exception
 from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
@@ -46,4 +47,5 @@ __all__ = [
     "InfiniteThread",
     "InfiniteLoopingParallelismMixIn",
     "put_log_message_into_queue",
+    "print_exception",
 ]

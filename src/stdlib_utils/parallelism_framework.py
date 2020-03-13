@@ -15,8 +15,7 @@ from typing import Tuple
 from typing import Union
 
 from .misc import get_formatted_stack_trace
-
-PRINT_WARNING_MSG = "Caution, this fatal error message is being printed to the console before attempting to be logged. Confirm it is in the log file before closing the console. Screenshot or copy the console to save the error if it is not in the log!"
+from .misc import print_exception
 
 
 class InfiniteLoopingParallelismMixIn:
@@ -121,9 +120,7 @@ class InfiniteLoopingParallelismMixIn:
             try:
                 self._setup_before_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-                print(
-                    f"{PRINT_WARNING_MSG} {e}"
-                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
+                print_exception(e, "cf477f32-9797-417e-a157-ea6e0c4f25d1")
                 self._report_fatal_error(e)
                 return
         while True:
@@ -132,9 +129,7 @@ class InfiniteLoopingParallelismMixIn:
             try:
                 self._commands_for_each_run_iteration()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-                print(
-                    f"{PRINT_WARNING_MSG} {e}"
-                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
+                print_exception(e, "88a25177-b2a1-4bbb-ba92-bf5810594a99")
                 self._report_fatal_error(e)
                 self.stop()
             if self.is_preparing_for_soft_stop() and self._process_can_be_soft_stopped:
@@ -152,9 +147,7 @@ class InfiniteLoopingParallelismMixIn:
             try:
                 self._teardown_after_loop()
             except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-                print(
-                    f"{PRINT_WARNING_MSG} {e}"
-                )  # sometimes fatal errors really mess things up and can't even be reported correctly...so at least print it to STDOUT
+                print_exception(e, "bd9a8587-e79b-43cb-8ffe-0bf45740599d")
                 self._report_fatal_error(e)
 
     def _sleep_for_idle_time_during_iteration(
