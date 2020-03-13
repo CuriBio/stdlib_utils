@@ -70,14 +70,20 @@ def test_put_log_message_into_queue__puts_message_in_when_at_threshold():
     q = queue.Queue()
     msg = "hey"
     put_log_message_into_queue(logging.INFO, msg, q, logging.INFO)
-    assert q.get_nowait() == msg
+    the_comm = q.get_nowait()
+    assert isinstance(the_comm, dict)
+    assert the_comm["communication_type"] == "log"
+    assert the_comm["log_level"] == logging.INFO
+    assert the_comm["message"] == msg
 
 
 def test_put_log_message_into_queue__puts_message_in_when_above_threshold():
     q = queue.Queue()
     msg = "hey jude"
     put_log_message_into_queue(logging.ERROR, msg, q, logging.WARNING)
-    assert q.get_nowait() == msg
+    the_comm = q.get_nowait()
+    assert the_comm["message"] == msg
+    assert the_comm["log_level"] == logging.ERROR
 
 
 def test_put_log_message_into_queue__does_not_put_message_in_when_below_threshold():

@@ -34,7 +34,12 @@ def put_log_message_into_queue(
     threshold of the queue.
     """
     if log_level_of_this_message >= log_level_threshold:
-        the_queue.put(the_message)
+        comm_dict = {
+            "communication_type": "log",
+            "log_level": log_level_of_this_message,
+            "message": the_message,
+        }
+        the_queue.put(comm_dict)
 
 
 def invoke_process_run_and_check_errors(
