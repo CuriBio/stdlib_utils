@@ -167,7 +167,6 @@ class InfiniteLoopingParallelismMixIn:
             int(self.get_minimum_iteration_duration_seconds() * 10 ** 9)
             - iteration_time_ns
         )
-        print(type(idle_time_ns))
         if idle_time_ns > 0:
             self._idle_iteration_time_ns += idle_time_ns
             time.sleep(idle_time_ns / 10 ** 9)
