@@ -24,7 +24,9 @@ class InfiniteLoopingParallelismMixIn:
     def __init__(
         self,
         fatal_error_reporter: Union[
-            queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
+            queue.Queue[str],
+            multiprocessing.Queue[Tuple[Exception, str]],
+            multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
         ],
         logging_level: int,
         stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
@@ -77,7 +79,9 @@ class InfiniteLoopingParallelismMixIn:
     def get_fatal_error_reporter(
         self,
     ) -> Union[
-        queue.Queue[str], multiprocessing.queues.SimpleQueue[Tuple[Exception, str]]
+        queue.Queue[str],
+        multiprocessing.Queue[Tuple[Exception, str]],
+        multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
     ]:
         return self._fatal_error_reporter
 

@@ -6,9 +6,11 @@ multiprocessing_utils.
 """
 from __future__ import annotations
 
+import multiprocessing
 import queue
 from queue import Queue
 from typing import Any
+from typing import Dict
 from typing import Union
 
 from .multiprocessing_utils import InfiniteProcess
@@ -22,9 +24,12 @@ def put_log_message_into_queue(
     the_message: Any,
     the_queue: Union[
         Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
+            Dict[str, Any]
         ],
         SimpleMultiprocessingQueue,
+        multiprocessing.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Dict[str, Any]
+        ],
     ],
     log_level_threshold: int,
 ) -> None:
@@ -79,8 +84,5 @@ def invoke_process_run_and_check_errors(
             raise NotImplementedError("Errors from InfiniteThread must be Exceptions")
 
         InfiniteThread.log_and_raise_error_from_reporter(err_info)
-        # if not isinstance(err_info, (Exception, tuple)):
-        #     raise NotImplementedError("The error info must be one of those two types.")
-        # the_process.__class__.log_and_raise_error_from_reporter(err_info)
     except queue.Empty:
         pass
