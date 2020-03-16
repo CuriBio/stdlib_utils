@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 from multiprocessing import Process
 import queue
-import time
 from unittest import mock
 
 import pytest
@@ -196,20 +195,10 @@ def test_InfiniteProcess__error_queue_is_populated_when_error_queue_is_multiproc
     mocker,
 ):
     mocker.patch("builtins.print")  # don't print the error message to stdout
-    expected_error = ValueError("test message")
     error_queue = multiprocessing.Queue()
     p = InfiniteProcessThatRasiesError(error_queue)
-    invoke_process_run_and_check_errors(p)
-    time.sleep(0.001)
-    assert error_queue.empty() is False
-    actual_error, actual_stack_trace = error_queue.get()
-    # assert spied_print_exception.call_count == 1
-    # assert mocked_print.call_count==1
-
-    assert isinstance(actual_error, type(expected_error))
-    assert str(actual_error) == str(expected_error)
-    # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
-    assert 'raise ValueError("test message")' in actual_stack_trace
+    with pytest.raises(ValueError, match="test message"):
+        invoke_process_run_and_check_errors(p)
 
 
 def test_InfiniteProcess__calls_setup_before_loop(mocker):

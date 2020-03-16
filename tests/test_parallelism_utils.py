@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import multiprocessing
 import queue
 import time
 
@@ -23,6 +24,16 @@ def test_invoke_process_run_and_check_errors__passes_values_for_InfiniteProcess(
 
     invoke_process_run_and_check_errors(p, num_iterations=2)
     assert spied_run.call_count == 3
+
+
+def test_invoke_process_run_and_check_errors__pauses_long_enough_to_process_standard_multiprocessing_queue(
+    mocker,
+):
+    error_queue = multiprocessing.Queue()
+    p = InfiniteProcessThatRasiesError(error_queue)
+
+    with pytest.raises(ValueError, match="test message"):
+        invoke_process_run_and_check_errors(p)
 
 
 def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_InfiniteProcess(

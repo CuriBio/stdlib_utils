@@ -68,6 +68,7 @@ def invoke_process_run_and_check_errors(
         perform_setup_before_loop=perform_setup_before_loop,
         perform_teardown_after_loop=False,
     )
+    sleep_so_queue_empty_is_accurate()
     try:
         err_info = the_process.get_fatal_error_reporter().get_nowait()  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
         if isinstance(the_process, InfiniteProcess):
