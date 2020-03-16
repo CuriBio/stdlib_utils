@@ -88,7 +88,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
             raise NotImplementedError(
                 "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue or multiprocessing.Queue"
             )
-        reporter.put((the_err, formatted_stack_trace))
+        reporter.put_nowait((the_err, formatted_stack_trace))
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined

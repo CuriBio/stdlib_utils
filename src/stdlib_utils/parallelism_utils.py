@@ -44,7 +44,7 @@ def put_log_message_into_queue(
             "log_level": log_level_of_this_message,
             "message": the_message,
         }
-        the_queue.put(comm_dict)
+        the_queue.put_nowait(comm_dict)
 
 
 def invoke_process_run_and_check_errors(

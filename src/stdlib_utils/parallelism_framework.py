@@ -86,7 +86,7 @@ class InfiniteLoopingParallelismMixIn:
         return self._fatal_error_reporter
 
     def _report_fatal_error(self, the_err: Exception) -> None:
-        self._fatal_error_reporter.put(the_err)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
+        self._fatal_error_reporter.put_nowait(the_err)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
 
     def _setup_before_loop(self) -> None:
         """Perform any necessary setup prior to initiating the infinite loop.
