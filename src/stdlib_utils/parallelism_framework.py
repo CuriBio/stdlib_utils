@@ -25,7 +25,7 @@ class InfiniteLoopingParallelismMixIn:
         self,
         fatal_error_reporter: Union[
             queue.Queue[str],
-            multiprocessing.Queue[Tuple[Exception, str]],
+            multiprocessing.queues.Queue[Tuple[Exception, str]],
             multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
         ],
         logging_level: int,
@@ -80,7 +80,7 @@ class InfiniteLoopingParallelismMixIn:
         self,
     ) -> Union[
         queue.Queue[str],
-        multiprocessing.Queue[Tuple[Exception, str]],
+        multiprocessing.queues.Queue[Tuple[Exception, str]],
         multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
     ]:
         return self._fatal_error_reporter

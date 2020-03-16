@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
 import queue
+import time
 
 import pytest
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
+from stdlib_utils import sleep_so_queue_empty_is_accurate
 
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
@@ -91,3 +93,9 @@ def test_put_log_message_into_queue__does_not_put_message_in_when_below_threshol
     msg = "hey there"
     put_log_message_into_queue(logging.DEBUG, msg, q, logging.INFO)
     assert q.empty() is True
+
+
+def test_sleep_so_queue_empty_is_accurate(mocker):
+    spied_sleep = mocker.spy(time, "sleep")
+    sleep_so_queue_empty_is_accurate()
+    spied_sleep.assert_called_once_with(0.001)

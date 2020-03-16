@@ -6,7 +6,6 @@ import logging
 import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Process
-from multiprocessing import Queue
 import multiprocessing.queues
 import queue
 from typing import Any
@@ -60,7 +59,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         self,
         fatal_error_reporter: Union[
             SimpleMultiprocessingQueue,
-            Queue[  # pylint: disable=unsubscriptable-object # https://github.com/PyCQA/pylint/issues/1498
+            multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
                 Any
             ],
         ],
@@ -77,14 +76,12 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
             minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
         )
 
-        # self._stop_event = Event()
-
-        # self._soft_stop_event = Event()
-
     def _report_fatal_error(self, the_err: Exception) -> None:
         formatted_stack_trace = get_formatted_stack_trace(the_err)
         reporter = self._fatal_error_reporter
-        if not isinstance(reporter, (SimpleMultiprocessingQueue, Queue)):
+        if not isinstance(
+            reporter, (SimpleMultiprocessingQueue, multiprocessing.queues.Queue)
+        ):
             raise NotImplementedError(
                 "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue or multiprocessing.Queue"
             )

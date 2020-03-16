@@ -7,8 +7,10 @@ multiprocessing_utils.
 from __future__ import annotations
 
 import multiprocessing
+import multiprocessing.queues
 import queue
 from queue import Queue
+import time
 from typing import Any
 from typing import Dict
 from typing import Union
@@ -19,6 +21,10 @@ from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .threading_utils import InfiniteThread
 
 
+def sleep_so_queue_empty_is_accurate() -> None:
+    time.sleep(0.001)
+
+
 def put_log_message_into_queue(
     log_level_of_this_message: int,
     the_message: Any,
@@ -27,7 +33,7 @@ def put_log_message_into_queue(
             Dict[str, Any]
         ],
         SimpleMultiprocessingQueue,
-        multiprocessing.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
             Dict[str, Any]
         ],
     ],
