@@ -30,6 +30,14 @@ def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
     assert actual == expected
 
 
+def test_SimpleMultiprocessingQueue__put_nowait__adds_value_to_queue():
+    test_queue = SimpleMultiprocessingQueue()
+    expected = "blah7"
+    test_queue.put_nowait(expected)
+    actual = test_queue.get_nowait()
+    assert actual == expected
+
+
 @pytest.mark.timeout(0.1)  # set a timeout because the test can hang as a failure mode
 def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
     test_queue = SimpleMultiprocessingQueue()

@@ -6,6 +6,7 @@ import logging
 import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Process
+from multiprocessing import Queue
 import multiprocessing.queues
 import queue
 from typing import Any
@@ -33,6 +34,15 @@ class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: i
             raise queue.Empty()
         return self.get()
 
+    def put_nowait(self, obj: Any) -> None:
+        """Put without waiting/blocking.
+
+        This is the only option with a SimpleQueue, but this is aliased
+        to put to make the interface compatible with the regular
+        multiprocessing.Queue interface.
+        """
+        self.put(obj)
+
 
 # pylint: disable=duplicate-code
 class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
@@ -48,7 +58,12 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     def __init__(
         self,
-        fatal_error_reporter: SimpleMultiprocessingQueue,
+        fatal_error_reporter: Union[
+            SimpleMultiprocessingQueue,
+            Queue[  # pylint: disable=unsubscriptable-object # https://github.com/PyCQA/pylint/issues/1498
+                Any
+            ],
+        ],
         logging_level: int = logging.INFO,
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
@@ -69,9 +84,9 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
     def _report_fatal_error(self, the_err: Exception) -> None:
         formatted_stack_trace = get_formatted_stack_trace(the_err)
         reporter = self._fatal_error_reporter
-        if not isinstance(reporter, SimpleMultiprocessingQueue):
+        if not isinstance(reporter, (SimpleMultiprocessingQueue, Queue)):
             raise NotImplementedError(
-                "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue"
+                "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue or multiprocessing.Queue"
             )
         reporter.put((the_err, formatted_stack_trace))
 
