@@ -50,6 +50,9 @@ class InfiniteLoopingParallelismMixIn:
         self._start_timepoint_of_last_performance_measurement = time.perf_counter_ns()
         self._idle_iteration_time_ns = 0
 
+    def get_start_timepoint_of_performance_measurement(self) -> int:
+        return self._start_timepoint_of_last_performance_measurement
+
     def reset_performance_tracker(self) -> Dict[str, int]:
         out_dict: Dict[str, int] = {}
         out_dict[

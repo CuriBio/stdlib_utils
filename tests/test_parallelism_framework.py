@@ -109,3 +109,17 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__counts_idle
         allowed_time_per_iter_ns * 2 - time_of_first_iter_ns - time_of_second_iter_ns
     )
     assert total_idle_time == expected_idle_time
+
+
+def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_measurement(
+    mocker,
+):
+    expected_timepoint = 123554
+    mocker.patch.object(
+        time, "perf_counter_ns", autospec=True, side_effect=[expected_timepoint],
+    )
+
+    p = generic_infinte_looper()
+
+    actual_timepoint = p.get_start_timepoint_of_performance_measurement()
+    assert actual_timepoint == expected_timepoint
