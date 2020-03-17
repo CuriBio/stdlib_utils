@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import multiprocessing
 from multiprocessing import Process
 import queue
 from unittest import mock
@@ -7,6 +8,7 @@ from unittest import mock
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteProcess
+from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
@@ -26,6 +28,14 @@ def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
     test_queue = SimpleMultiprocessingQueue()
     expected = "blah"
     test_queue.put(expected)
+    actual = test_queue.get_nowait()
+    assert actual == expected
+
+
+def test_SimpleMultiprocessingQueue__put_nowait__adds_value_to_queue():
+    test_queue = SimpleMultiprocessingQueue()
+    expected = "blah7"
+    test_queue.put_nowait(expected)
     actual = test_queue.get_nowait()
     assert actual == expected
 
@@ -157,7 +167,13 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_run__and
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
 
 
-def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spawned_run():
+def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spawned_run(
+    mocker,
+):
+    # spied_print_exception = mocker.spy(
+    #     parallelism_framework, "print_exception"
+    # )  # Eli (3/13/20) can't figure out why this isn't working (call count never gets to 1), so just asserting about print instead
+    mocker.patch("builtins.print")  # don't print the error message to stdout
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcessThatRasiesError(error_queue)
@@ -165,12 +181,24 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spa
     p.join()
     assert error_queue.empty() is False
     actual_error, actual_stack_trace = error_queue.get()
+    # assert spied_print_exception.call_count == 1
+    # assert mocked_print.call_count==1
 
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
     assert p.exitcode == 0  # When errors are handled, the error code is 0
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
     assert 'raise ValueError("test message")' in actual_stack_trace
+
+
+def test_InfiniteProcess__error_queue_is_populated_when_error_queue_is_multiprocessing_Queue(
+    mocker,
+):
+    mocker.patch("builtins.print")  # don't print the error message to stdout
+    error_queue = multiprocessing.Queue()
+    p = InfiniteProcessThatRasiesError(error_queue)
+    with pytest.raises(ValueError, match="test message"):
+        invoke_process_run_and_check_errors(p)
 
 
 def test_InfiniteProcess__calls_setup_before_loop(mocker):

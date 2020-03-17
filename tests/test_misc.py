@@ -11,6 +11,7 @@ from stdlib_utils import create_directory_if_not_exists
 from stdlib_utils import get_formatted_stack_trace
 from stdlib_utils import is_system_windows
 from stdlib_utils import misc
+from stdlib_utils import print_exception
 from stdlib_utils import raise_alarm_signal
 from stdlib_utils import resource_path
 
@@ -138,3 +139,16 @@ def test_get_formatted_stack_trace():
         the_err = e
     actual_stack_trace = get_formatted_stack_trace(the_err)
     assert "raise expected_error" in actual_stack_trace
+
+
+def test_print_error_message(mocker):
+    e = ValueError("some wrong value")
+    mocked_print = mocker.patch("builtins.print", autospec=True)
+    print_exception(e, "297a25ec-ce3e-46bc-9cb5-58ac4048bbd5")
+    assert mocked_print.call_count == 1
+    actual_call_str = str(mocked_print.mock_calls[0])
+    assert "This fatal error message is being printed" in actual_call_str
+    assert "297a25ec-ce3e-46bc-9cb5-58ac4048bbd5" in actual_call_str
+    assert "ValueError" in actual_call_str
+    assert "some wrong value" in actual_call_str
+    assert ", line" in actual_call_str

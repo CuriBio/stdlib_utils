@@ -104,7 +104,7 @@ repos:
         - --ignore=D100,D101,D102,D103,D104,D105,D106,D107,D203,D407,D408,D409,D406,D413,D213
 
 -   repo: https://github.com/NanoSurface-Biomedical/pre-commit-pylint
-    rev: 'c146813ee8ea43aac285c0b47065f50def565203'  # pick a git hash / tag to point to
+    rev: "5a76725fa664ca733db485598da5c8460cf3347f" # pick a git hash / tag to point to
     hooks:
     -   id: pylint-pass-with-displayed-warnings
         name: pylint-src
@@ -126,3 +126,4 @@ repos:
         files: 'tests/.*\.py$'
         exclude: '.*\~.*'
         verbose: true
+    - id: python-check-no-print-statments
