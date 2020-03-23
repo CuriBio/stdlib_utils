@@ -38,6 +38,7 @@ def put_log_message_into_queue(
         ],
     ],
     log_level_threshold: int,
+    pause_after_put: bool = False,
 ) -> None:
     """Put a log message into a queue.
 
@@ -51,6 +52,8 @@ def put_log_message_into_queue(
             "message": the_message,
         }
         the_queue.put_nowait(comm_dict)
+    if not isinstance(the_queue, SimpleMultiprocessingQueue) and pause_after_put:
+        time.sleep(0.001)
 
 
 def invoke_process_run_and_check_errors(
