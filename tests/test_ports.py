@@ -52,3 +52,14 @@ def test_confirm_port_in_use__passes_correct_args_to_is_port_in_use(mocker):
     )
     confirm_port_in_use(7766, host="testhost2")
     mocked_in_use.assert_called_once_with(7766, host="testhost2")
+
+
+@pytest.mark.timeout(1)
+def test_confirm_port_in_use__returns_after_a_few_iterations_until_port_is_available(
+    mocker,
+):
+    mocked_is_in_use = mocker.patch.object(
+        ports, "is_port_in_use", autospec=True, side_effect=[False, False, False, True]
+    )
+    confirm_port_in_use(7654, timeout=10)
+    assert mocked_is_in_use.call_count == 4

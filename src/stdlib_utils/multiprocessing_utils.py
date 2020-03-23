@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utilities for multiprocessing."""
+from __future__ import annotations
+
 import logging
 import multiprocessing
 from multiprocessing import Event
@@ -9,6 +11,7 @@ import queue
 from typing import Any
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
@@ -30,6 +33,15 @@ class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: i
             raise queue.Empty()
         return self.get()
 
+    def put_nowait(self, obj: Any) -> None:
+        """Put without waiting/blocking.
+
+        This is the only option with a SimpleQueue, but this is aliased
+        to put to make the interface compatible with the regular
+        multiprocessing.Queue interface.
+        """
+        self.put(obj)
+
 
 # pylint: disable=duplicate-code
 class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
@@ -43,19 +55,37 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     # pylint: disable=duplicate-code
 
-    def __init__(self, fatal_error_reporter: SimpleMultiprocessingQueue) -> None:
-        super().__init__()
-        self._stop_event = Event()
-        self._fatal_error_reporter = fatal_error_reporter
-        self._process_can_be_soft_stopped = True
-        self._soft_stop_event = Event()
-
-    def get_fatal_error_reporter(self) -> SimpleMultiprocessingQueue:
-        return self._fatal_error_reporter
+    def __init__(
+        self,
+        fatal_error_reporter: Union[
+            SimpleMultiprocessingQueue,
+            multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+                Any
+            ],
+        ],
+        logging_level: int = logging.INFO,
+        minimum_iteration_duration_seconds: Union[float, int] = 0.01,
+    ) -> None:
+        Process.__init__(self)
+        InfiniteLoopingParallelismMixIn.__init__(
+            self,
+            fatal_error_reporter,
+            logging_level,
+            Event(),
+            Event(),
+            minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
+        )
 
     def _report_fatal_error(self, the_err: Exception) -> None:
         formatted_stack_trace = get_formatted_stack_trace(the_err)
-        self._fatal_error_reporter.put((the_err, formatted_stack_trace))
+        reporter = self._fatal_error_reporter
+        if not isinstance(
+            reporter, (SimpleMultiprocessingQueue, multiprocessing.queues.Queue)
+        ):
+            raise NotImplementedError(
+                "The error reporter for InfiniteProcess must by a SimpleMultiprocessingQueue or multiprocessing.Queue"
+            )
+        reporter.put_nowait((the_err, formatted_stack_trace))
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
@@ -75,7 +105,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
         )
 
     @staticmethod
-    def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:
+    def log_and_raise_error_from_reporter(error_info: Tuple[Exception, str]) -> None:  # type: ignore[override] # noqa: F821 # we are not calling the super function here, we are completely overriding the type of object it accepts
         err, formatted_traceback = error_info
         logging.exception(formatted_traceback)
         raise err

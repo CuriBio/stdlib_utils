@@ -4,9 +4,56 @@
 This module can import things from both threading_utils and
 multiprocessing_utils.
 """
-import queue
+from __future__ import annotations
 
-from .multiprocessing_utils import InfiniteLoopingParallelismMixIn
+import multiprocessing
+import multiprocessing.queues
+import queue
+from queue import Queue
+import time
+from typing import Any
+from typing import Dict
+from typing import Union
+
+from .multiprocessing_utils import InfiniteProcess
+from .multiprocessing_utils import SimpleMultiprocessingQueue
+from .parallelism_framework import InfiniteLoopingParallelismMixIn
+from .threading_utils import InfiniteThread
+
+
+def sleep_so_queue_processes_change() -> None:
+    time.sleep(0.001)
+
+
+def put_log_message_into_queue(
+    log_level_of_this_message: int,
+    the_message: Any,
+    the_queue: Union[
+        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Dict[str, Any]
+        ],
+        SimpleMultiprocessingQueue,
+        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Dict[str, Any]
+        ],
+    ],
+    log_level_threshold: int,
+    pause_after_put: bool = False,
+) -> None:
+    """Put a log message into a queue.
+
+    The message is only put in if the log level of the message meets the
+    threshold of the queue.
+    """
+    if log_level_of_this_message >= log_level_threshold:
+        comm_dict = {
+            "communication_type": "log",
+            "log_level": log_level_of_this_message,
+            "message": the_message,
+        }
+        the_queue.put_nowait(comm_dict)
+    if not isinstance(the_queue, SimpleMultiprocessingQueue) and pause_after_put:
+        sleep_so_queue_processes_change()
 
 
 def invoke_process_run_and_check_errors(
@@ -24,8 +71,28 @@ def invoke_process_run_and_check_errors(
         perform_setup_before_loop=perform_setup_before_loop,
         perform_teardown_after_loop=False,
     )
+    sleep_so_queue_processes_change()
     try:
         err_info = the_process.get_fatal_error_reporter().get_nowait()  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
-        the_process.__class__.log_and_raise_error_from_reporter(err_info)
+        if isinstance(the_process, InfiniteProcess):
+            if not isinstance(err_info, tuple):
+                raise NotImplementedError(
+                    "Errors from InfiniteProcess must be Tuple[Exception,str]"
+                )
+            excp, trace = err_info
+            if not isinstance(excp, Exception):
+                raise NotImplementedError(
+                    "Errors from InfiniteProcess must be Tuple[Exception,str]"
+                )
+            if not isinstance(trace, str):
+                raise NotImplementedError(
+                    "Errors from InfiniteProcess must be Tuple[Exception,str]"
+                )
+            InfiniteProcess.log_and_raise_error_from_reporter((excp, trace))
+        if not isinstance(err_info, Exception):
+
+            raise NotImplementedError("Errors from InfiniteThread must be Exceptions")
+
+        InfiniteThread.log_and_raise_error_from_reporter(err_info)
     except queue.Empty:
         pass

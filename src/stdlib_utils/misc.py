@@ -7,6 +7,8 @@ import signal
 import sys
 import traceback
 from typing import Optional
+from typing import Union
+from uuid import UUID
 
 
 def is_frozen_as_exe() -> bool:
@@ -18,7 +20,7 @@ def is_frozen_as_exe() -> bool:
     return hasattr(sys, "_MEIPASS")
 
 
-def get_path_to_frozen_bundle() -> str:
+def get_path_to_frozen_bundle() -> str:  # pragma: no cover
     """Return path to the running bundle made by PyInstaller.
 
     Eli (12/20/19) cannot figure out how to mock sys, so this is not
@@ -86,3 +88,10 @@ def get_formatted_stack_trace(e: Exception) -> str:
     pretty = traceback.format_list(stack)
     formatted_stack_trace = "".join(pretty) + "\n  {} {}".format(e.__class__, e)
     return formatted_stack_trace
+
+
+def print_exception(the_exception: Exception, call_id: Union[UUID, str]) -> None:
+    print_warning_msg = "IMPORTANT: This fatal error message is being printed to the console before attempting to be logged. Confirm it is in the log file before closing the console. Screenshot or copy the console to save the error if it is not in the log!"
+    stack_trace = get_formatted_stack_trace(the_exception)
+    msg = f"{print_warning_msg}\nID of call to print: {call_id}\n{stack_trace}"
+    print(msg)  # allow-print

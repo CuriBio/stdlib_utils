@@ -3,6 +3,7 @@ import logging
 import os
 import tempfile
 import time
+from unittest.mock import ANY
 
 from freezegun import freeze_time
 from stdlib_utils import configure_logging
@@ -11,7 +12,7 @@ from stdlib_utils import misc
 
 
 def test_configure_logging__default_args(mocker):
-    mocked_basic_config = mocker.patch.object(logging, "basicConfig", autospec=True)
+    spied_basic_config = mocker.spy(logging, "basicConfig")
     configure_logging()
 
     assert (
@@ -19,10 +20,10 @@ def test_configure_logging__default_args(mocker):
         == time.gmtime  # pylint: disable=comparison-with-callable
     )
 
-    assert mocked_basic_config.call_count == 1
-    _, kwargs = mocked_basic_config.call_args_list[0]
+    assert spied_basic_config.call_count == 1
+    _, kwargs = spied_basic_config.call_args_list[0]
     assert set(kwargs.keys()) == set(["level", "format", "handlers"])
-    assert kwargs["level"] == logging.DEBUG
+    assert kwargs["level"] == logging.INFO
     assert (
         kwargs["format"]
         == "[%(asctime)s UTC] %(name)s-{%(filename)s:%(lineno)d} %(levelname)s - %(message)s"
@@ -38,6 +39,14 @@ def test_configure_logging__default_args(mocker):
     )
 
 
+def test_configure_logging__sets_log_level_to_provided_arg(mocker):
+    spied_basic_config = mocker.spy(logging, "basicConfig")
+    configure_logging(log_level=logging.DEBUG)
+    spied_basic_config.assert_called_once_with(
+        level=logging.DEBUG, format=ANY, handlers=ANY
+    )
+
+
 @freeze_time("2020-02-10 13:17:22")
 def test_configure_logging__with_file_name__creates_dir_using_resource_path(mocker):
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -47,14 +56,14 @@ def test_configure_logging__with_file_name__creates_dir_using_resource_path(mock
         )
         spied_create_dir = mocker.spy(loggers, "create_directory_if_not_exists")
         spied_resource_path = mocker.spy(loggers, "resource_path")
-        mocked_basic_config = mocker.patch.object(logging, "basicConfig", autospec=True)
+        spied_basic_config = mocker.patch.object(logging, "basicConfig")
         configure_logging(log_file_prefix="my_log")
 
         spied_resource_path.assert_called_once_with("logs", base_path=os.getcwd())
         spied_create_dir.assert_called_once_with(os.path.join(tmp_dir, "logs"))
 
-        assert mocked_basic_config.call_count == 1
-        _, kwargs = mocked_basic_config.call_args_list[0]
+        assert spied_basic_config.call_count == 1
+        _, kwargs = spied_basic_config.call_args_list[0]
         assert set(kwargs.keys()) == set(["level", "format", "handlers"])
 
         actual_handlers = kwargs["handlers"]
