@@ -9,7 +9,7 @@ from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
-from stdlib_utils import sleep_so_queue_empty_is_accurate
+from stdlib_utils import sleep_so_queue_processes_change
 
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
@@ -130,15 +130,17 @@ def test_put_log_message_into_queue__does_not_sleep_after_putting_message_into_s
     spied_sleep.assert_not_called()
 
 
-def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value(mocker):
+def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value_and_regular_queue(
+    mocker,
+):
     spied_sleep = mocker.spy(time, "sleep")
-    sq = SimpleMultiprocessingQueue()
+    q = queue.Queue()
     msg = "hey there"
-    put_log_message_into_queue(logging.ERROR, msg, sq, logging.WARNING)
+    put_log_message_into_queue(logging.ERROR, msg, q, logging.WARNING)
     spied_sleep.assert_not_called()
 
 
-def test_sleep_so_queue_empty_is_accurate(mocker):
+def test_sleep_so_queue_processes_change(mocker):
     spied_sleep = mocker.spy(time, "sleep")
-    sleep_so_queue_empty_is_accurate()
+    sleep_so_queue_processes_change()
     spied_sleep.assert_called_once_with(0.001)

@@ -21,7 +21,7 @@ from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .threading_utils import InfiniteThread
 
 
-def sleep_so_queue_empty_is_accurate() -> None:
+def sleep_so_queue_processes_change() -> None:
     time.sleep(0.001)
 
 
@@ -53,7 +53,7 @@ def put_log_message_into_queue(
         }
         the_queue.put_nowait(comm_dict)
     if not isinstance(the_queue, SimpleMultiprocessingQueue) and pause_after_put:
-        time.sleep(0.001)
+        sleep_so_queue_processes_change()
 
 
 def invoke_process_run_and_check_errors(
@@ -71,7 +71,7 @@ def invoke_process_run_and_check_errors(
         perform_setup_before_loop=perform_setup_before_loop,
         perform_teardown_after_loop=False,
     )
-    sleep_so_queue_empty_is_accurate()
+    sleep_so_queue_processes_change()
     try:
         err_info = the_process.get_fatal_error_reporter().get_nowait()  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
         if isinstance(the_process, InfiniteProcess):
