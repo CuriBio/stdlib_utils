@@ -10,7 +10,7 @@
 # git config credential.helper store
 #  then do a git command, enter credentials, and they should be saved after that
 
-pre-commit==1.20.0 # run 'pre-commit install' initially to install the git hooks
+pre-commit==2.2.0 # run 'pre-commit install' initially to install the git hooks
 pytest==5.3.1
 pytest-cov==2.8.1
 pytest-randomly==3.1.0
