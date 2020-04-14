@@ -14,12 +14,12 @@ phases:
       # In CodeBuild, sometimes a direct SHA is grabbed rather than a branch, so the 'name' of the branch is listed as: (no branch)
       #   So can't use traditional grep to just check that the name of the current branch is 'master', have to explicitly check the SHAs
       - SHA_OF_LOCAL_COMMIT=$(git branch -av | grep "*" | grep -oP " \s+\K\w+")
-      - echo "Creating virtual environment for Python 3.6"
+      - echo "Creating virtual environment for Python"
       - python -m venv venv
       - echo "Entering virtual environment"
       - . venv/bin/activate
       - echo "Upgrading pip"
-      - pip install pip==19.3.1 --upgrade
+      - pip install pip==20.0.2 --upgrade
       - echo "Installing developent/testing packages"
       - pip install -r requirements-dev.txt --find-links python_pip_package_links/package_links.html
       - echo "Installing main package"
@@ -27,11 +27,11 @@ phases:
       - echo "Listing all installed packages"
       - pip freeze
       - pre-commit install
+
   pre_build:
     commands:
       - echo "Running pre-commit hooks on all the files"
       - pre-commit run -a
-
 
   build:
     commands:
