@@ -25,13 +25,37 @@ Resources:
           Effect: Allow
           Resource: '*'
         - Action:
+          - ssm:GetParameters
+          Effect: Allow
+          Resource:
+          - Fn::Join:
+            - '/'
+            - - 'arn:aws:ssm:*:*:parameter/CodeBuild'
+              - Ref: 'CodeCommitRepoName'
+              - 'testing*'
+          - Fn::Join:
+            - '/'
+            - - 'arn:aws:ssm:*:*:parameter/CodeBuild'
+              - Ref: 'CodeCommitRepoName'
+              - 'staging*'
+        - Action:
+          - kms:Decrypt
+          Effect: Allow
+          Resource: 'arn:aws:kms:*:*:alias/aws/ssm'
+        - Action:
           - codecommit:GitPull
           Effect: Allow
           Resource: '*'
         - Action:
           - codecommit:GitPush
           Effect: Allow
-          Resource: '*'
+          Resource:
+            Fn::Join:
+              - ':'
+              - - 'arn:aws:codecommit'
+                - Ref: 'AWS::Region'
+                - '*'
+                - Ref: 'CodeCommitRepoName'
           # Eli (11/20/19): this is not actually effectively restricting pushes to only master for some unknown reason...
           # Eli (12/4/19): ...it somehow now seems to be preventing pushses to master...???
           # Condition:
@@ -40,12 +64,13 @@ Resources:
           #       - 'refs/heads/master'
           #   'Null':
           #     'codecommit:References': 'false'
-      PolicyName: !Join
-        - '-'
-        -  - !Ref 'AWS::StackName'
-           - CodeBuildPolicy
+      PolicyName:
+        Fn::Join:
+          - '-'
+          -  - Ref: 'AWS::StackName'
+             - CodeBuildPolicy
       Roles:
-      - !Ref 'CodeBuildRole'
+      - Ref: 'CodeBuildRole'
     Type: AWS::IAM::Policy
 
   CodeBuildProject:
@@ -55,24 +80,33 @@ Resources:
       Artifacts:
         Type: NO_ARTIFACTS
       BadgeEnabled: true
-      Description: !Join
-        - ''
-        - - 'CodeBuild Project for '
-          - !Ref 'AWS::StackName'
+      Description:
+        Fn::Join:
+          - ''
+          - - 'CodeBuild Project for '
+            - Ref: 'AWS::StackName'
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:1.0-1.8.0
+        Image: aws/codebuild/standard:4.0-20.03.13
         Type: LINUX_CONTAINER
-      Name: !Ref 'CodeCommitRepoName'
-      ServiceRole: !Ref 'CodeBuildRole'
+        EnvironmentVariables:
+          - Name: APPLY_TAG
+            Type: PLAINTEXT
+            Value: ""
+
+      Name:
+        Ref: 'CodeCommitRepoName'
+      ServiceRole:
+        Ref: 'CodeBuildRole'
       Source:
         Type: CODECOMMIT
-        Location: !Join
-          - ''
-          - - 'https://git-codecommit.'
-            - !Ref 'AWS::Region'
-            - '.amazonaws.com/v1/repos/'
-            - !Ref 'CodeCommitRepoName'
+        Location:
+          Fn::Join:
+            - ''
+            - - 'https://git-codecommit.'
+              - Ref: 'AWS::Region'
+              - '.amazonaws.com/v1/repos/'
+              - Ref: 'CodeCommitRepoName'
       QueuedTimeoutInMinutes: 10
       TimeoutInMinutes: 30
     Type: AWS::CodeBuild::Project
@@ -87,8 +121,9 @@ Resources:
           Principal:
             Service: codebuild.amazonaws.com
       Path: /
-      RoleName: !Join
-        - '-'
-        - - !Ref 'AWS::StackName'
-          - CodeBuild
+      RoleName:
+        Fn::Join:
+          - '-'
+          - - Ref: 'AWS::StackName'
+            - CodeBuild
     Type: AWS::IAM::Role

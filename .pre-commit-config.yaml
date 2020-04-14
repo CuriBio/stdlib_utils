@@ -5,7 +5,7 @@ repos:
 
 # Git-related
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0  # Use the ref you want to point at
+    rev: v2.4.0  # Use the ref you want to point at
     hooks:
     -   id: forbid-new-submodules
 -   repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -20,10 +20,13 @@ repos:
     -   id: zimports
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0  # Use the ref you want to point at
+    rev: v2.4.0  # Use the ref you want to point at
     hooks:
         # black and docformatter don't do this in docstrings (11/1/19)
     -   id: trailing-whitespace
+    -   id: pretty-format-json
+        args: [--autofix, --no-sort-keys]
+
         # debatable whether this is necessary in Python3 or not
         # https://stackoverflow.com/questions/14083111/should-i-use-encoding-declaration-in-python-3
     -   id: fix-encoding-pragma
@@ -54,19 +57,18 @@ repos:
         exclude: tests*
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0  # Use the ref you want to point at
+    rev: v2.4.0  # Use the ref you want to point at
     hooks:
     -   id: detect-private-key
 
 # Invalid File Checks
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0  # Use the ref you want to point at
+    rev: v2.4.0  # Use the ref you want to point at
     hooks:
     -   id: check-added-large-files
         args: ['--maxkb=123']
     -   id: check-json
     -   id: check-yaml
-        exclude: codebuild_formation.yaml
     -   id: check-xml
     -   id: debug-statements
     -   id: check-merge-conflict

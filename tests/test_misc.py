@@ -7,7 +7,11 @@ import signal
 import tempfile
 import time
 
+import pytest
+from stdlib_utils import BlankAbsoluteResourcePathError
 from stdlib_utils import create_directory_if_not_exists
+from stdlib_utils import get_current_file_abs_directory
+from stdlib_utils import get_current_file_abs_path
 from stdlib_utils import get_formatted_stack_trace
 from stdlib_utils import is_system_windows
 from stdlib_utils import misc
@@ -53,6 +57,11 @@ def test_resource_path__returns_from_path_of_meipass_when_frozen_even_when_base_
     actual_path = resource_path("my_file4", base_path="somethingcrazy")
     expected_path = os.path.join(expected_base, "my_file4")
     assert actual_path == expected_path
+
+
+def test_resource_path__raises_error_if_blank_absolute_path_supplied():
+    with pytest.raises(BlankAbsoluteResourcePathError):
+        resource_path("blah", "")
 
 
 def test_is_system_windows__true_when_true(mocker):
@@ -152,3 +161,25 @@ def test_print_error_message(mocker):
     assert "ValueError" in actual_call_str
     assert "some wrong value" in actual_call_str
     assert ", line" in actual_call_str
+
+
+def test_get_current_file_abs_path():
+    expected_to_contain = os.path.join("stdlib_utils", "tests", "test_misc.py")
+    actual = get_current_file_abs_path()
+
+    assert actual.endswith(expected_to_contain) is True
+
+    # the actual beginning of the absolute path could vary system to system...so just make sure there is something in front of the known portion of the path
+    minimum_length = len(expected_to_contain) + 1
+    assert len(actual) > minimum_length
+
+
+def test_get_current_file_abs_directory():
+    expected_to_contain = os.path.join("stdlib_utils", "tests")
+    actual = get_current_file_abs_directory()
+
+    assert actual.endswith(expected_to_contain)
+
+    # the actual beginning of the absolute path could vary system to system...so just make sure there is something in front of the known portion of the path
+    minimum_length = len(expected_to_contain) + 1
+    assert len(actual) > minimum_length

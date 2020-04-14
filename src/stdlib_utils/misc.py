@@ -10,6 +10,23 @@ from typing import Optional
 from typing import Union
 from uuid import UUID
 
+from .exceptions import BlankAbsoluteResourcePathError
+
+
+def get_current_file_abs_path() -> str:
+    """Return the absolute path of the file that called this function."""
+    return inspect.stack()[1][1]
+
+
+def get_current_file_abs_directory() -> str:
+    """Return the absolute directory of the file that called this function.
+
+    The implementation cannot make a subcall to
+    get_current_file_abs_path because that would add an additional item
+    to the call stack.
+    """
+    return os.path.dirname((inspect.stack()[1][1]))
+
 
 def is_frozen_as_exe() -> bool:
     """Check if script is frozen as an exe using PyInstaller.
@@ -48,6 +65,8 @@ def resource_path(relative_path: str, base_path: Optional[str] = None) -> str:
             (inspect.stack()[1][1])
         )
         base_path = path_to_file_that_called_this_function
+    if base_path == "":
+        raise BlankAbsoluteResourcePathError()
     if is_frozen_as_exe():
         base_path = get_path_to_frozen_bundle()
     return os.path.join(base_path, relative_path)

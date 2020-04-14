@@ -6,7 +6,7 @@ env:
 phases:
   install:
     runtime-versions:
-      python: 3.6
+      python: 3.7
     commands:
       - echo "Git Branch information:"
       - git branch -av
@@ -27,12 +27,15 @@ phases:
       - echo "Listing all installed packages"
       - pip freeze
       - pre-commit install
+  pre_build:
+    commands:
+      - echo "Running pre-commit hooks on all the files"
+      - pre-commit run -a
+
 
   build:
     commands:
       - echo "Build started on $(date)"
-      - echo "Running pre-commit hooks on all the files"
-      - pre-commit run -a
       - echo "Running test suite"
       - pytest -xsvv
       - echo "Building Sphinx documentation"

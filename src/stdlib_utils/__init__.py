@@ -3,10 +3,13 @@
 from . import loggers
 from . import misc
 from . import ports
+from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
 from .loggers import configure_logging
 from .misc import create_directory_if_not_exists
+from .misc import get_current_file_abs_directory
+from .misc import get_current_file_abs_path
 from .misc import get_formatted_stack_trace
 from .misc import get_path_to_frozen_bundle
 from .misc import is_frozen_as_exe
@@ -45,9 +48,12 @@ __all__ = [
     "is_port_in_use",
     "PortUnavailableError",
     "PortNotInUseError",
+    "BlankAbsoluteResourcePathError",
     "InfiniteThread",
     "InfiniteLoopingParallelismMixIn",
     "put_log_message_into_queue",
     "sleep_so_queue_processes_change",
     "print_exception",
+    "get_current_file_abs_directory",
+    "get_current_file_abs_path",
 ]
