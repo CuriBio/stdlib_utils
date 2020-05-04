@@ -7,6 +7,8 @@ import time
 import pytest
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
+from stdlib_utils import is_queue_eventually_empty
+from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
 from stdlib_utils import sleep_so_queue_processes_change
@@ -140,7 +142,85 @@ def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value_and
     spied_sleep.assert_not_called()
 
 
+# @pytest.mark.filterwarnings('ignore:The function sleep_so_queue_processes_change')
 def test_sleep_so_queue_processes_change(mocker):
     spied_sleep = mocker.spy(time, "sleep")
     sleep_so_queue_processes_change()
     spied_sleep.assert_called_once_with(0.001)
+
+
+def test_sleep_so_queue_processes_change__raises_deprecation_warning():
+    with pytest.warns(DeprecationWarning, match="is_queue_eventually_empty"):
+        sleep_so_queue_processes_change()
+
+
+def test_is_queue_eventually_empty__returns_true_with_empty_threading_queue():
+    q = queue.Queue()
+    assert is_queue_eventually_empty(q) is True
+
+
+def test_is_queue_eventually_empty__returns_true_with_empty_multiprocessing_queue__after_just_one_call(
+    mocker,
+):
+    q = multiprocessing.Queue()
+    spied_empty = mocker.spy(q, "empty")
+    assert is_queue_eventually_empty(q) is True
+    assert spied_empty.call_count == 1
+
+
+def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue(
+    mocker,
+):
+    q = queue.Queue()
+    mocked_empty = mocker.patch.object(q, "empty", autospec=True, return_value=False)
+    assert is_queue_eventually_empty(q) is False
+    assert mocked_empty.call_count > 10
+
+
+def test_is_queue_eventually_empty__returns_true_after_multiple_attempts_with_eventually_empty_threading_queue(
+    mocker,
+):
+    q = queue.Queue()
+    mocked_empty = mocker.patch.object(
+        q, "empty", autospec=True, side_effect=[False, False, False, False, True]
+    )
+    assert is_queue_eventually_empty(q) is True
+    assert mocked_empty.call_count == 5
+
+
+def test_is_queue_eventually_not_empty__returns_true_with_not_empty_threading_queue__after_just_one_call(
+    mocker,
+):
+    q = queue.Queue()
+    q.put("bob")
+    spied_empty = mocker.spy(q, "empty")
+    time.sleep(0.1)  # just to be safe make sure thread is definitely populated
+    assert is_queue_eventually_not_empty(q) is True
+    assert spied_empty.call_count == 1
+
+
+def test_is_queue_eventually_not_empty__returns_true_with_not_empty_multiprocessing_queue():
+    q = multiprocessing.Queue()
+    q.put("bill")
+    time.sleep(0.1)  # just to be safe make sure thread is definitely populated
+    assert is_queue_eventually_not_empty(q) is True
+
+
+def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue(
+    mocker,
+):
+    q = queue.Queue()
+    spied_empty = mocker.spy(q, "empty")
+    assert is_queue_eventually_not_empty(q) is False
+    assert spied_empty.call_count > 10
+
+
+def test_is_queue_eventually_not_empty__returns_true_after_multiple_attempts_with_eventually_not_empty_threading_queue(
+    mocker,
+):
+    q = queue.Queue()
+    mocked_empty = mocker.patch.object(
+        q, "empty", autospec=True, side_effect=[True, True, True, False]
+    )
+    assert is_queue_eventually_not_empty(q) is True
+    assert mocked_empty.call_count == 4
