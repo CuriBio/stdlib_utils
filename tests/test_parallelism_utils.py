@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 import logging
 import multiprocessing
 import queue
@@ -142,14 +143,17 @@ def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value_and
     spied_sleep.assert_not_called()
 
 
-# @pytest.mark.filterwarnings('ignore:The function sleep_so_queue_processes_change')
 def test_sleep_so_queue_processes_change(mocker):
     spied_sleep = mocker.spy(time, "sleep")
     sleep_so_queue_processes_change()
     spied_sleep.assert_called_once_with(0.001)
 
 
-def test_sleep_so_queue_processes_change__raises_deprecation_warning():
+def test_sleep_so_queue_processes_change__raises_deprecation_warning(mocker):
+    # mock inpsect.stack so that it does not appear to be coming internally from inside stdlib_utils
+    mocker.patch.object(
+        inspect, "stack", autospec=True, return_value=[None, [None, "blah"]]
+    )
     with pytest.warns(DeprecationWarning, match="is_queue_eventually_empty"):
         sleep_so_queue_processes_change()
 

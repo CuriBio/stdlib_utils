@@ -6,6 +6,7 @@ multiprocessing_utils.
 """
 from __future__ import annotations
 
+import inspect
 import multiprocessing
 import multiprocessing.queues
 import queue
@@ -23,11 +24,12 @@ from .threading_utils import InfiniteThread
 
 
 def sleep_so_queue_processes_change() -> None:
-    warnings.warn(
-        DeprecationWarning(
-            "The function sleep_so_queue_processes_change is deprecated and should not be used. Instead replace the assertion in tests with either is_queue_eventually_empty or is_queue_eventually_not_empty as appropriate."
+    if "stdlib_utils/" not in inspect.stack()[1][1]:
+        warnings.warn(
+            DeprecationWarning(
+                "The function sleep_so_queue_processes_change is deprecated and should not be used. Instead replace the assertion in tests with either is_queue_eventually_empty or is_queue_eventually_not_empty as appropriate."
+            )
         )
-    )
     time.sleep(0.001)
 
 
