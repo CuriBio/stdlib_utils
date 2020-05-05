@@ -93,6 +93,9 @@ Resources:
           - Name: APPLY_TAG
             Type: PLAINTEXT
             Value: ""
+          - Name: PYTEST_RANDOMLY_SEED
+            Type: PLAINTEXT
+            Value: ""
 
       Name:
         Ref: 'CodeCommitRepoName'
