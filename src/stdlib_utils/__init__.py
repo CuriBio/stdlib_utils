@@ -21,6 +21,8 @@ from .multiprocessing_utils import InfiniteProcess
 from .multiprocessing_utils import SimpleMultiprocessingQueue
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .parallelism_utils import invoke_process_run_and_check_errors
+from .parallelism_utils import is_queue_eventually_empty
+from .parallelism_utils import is_queue_eventually_not_empty
 from .parallelism_utils import put_log_message_into_queue
 from .parallelism_utils import sleep_so_queue_processes_change
 from .ports import confirm_port_available
@@ -45,6 +47,8 @@ __all__ = [
     "ports",
     "confirm_port_in_use",
     "confirm_port_available",
+    "is_queue_eventually_empty",
+    "is_queue_eventually_not_empty",
     "is_port_in_use",
     "PortUnavailableError",
     "PortNotInUseError",
