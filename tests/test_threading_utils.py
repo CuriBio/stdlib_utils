@@ -109,6 +109,9 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
         t, "_commands_for_each_run_iteration", autospec=True, side_effect=expected_error
     )
     spied_stop = mocker.spy(t, "stop")
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     t.run()
     assert error_queue.empty() is False
     assert spied_stop.call_count == 1
@@ -118,10 +121,15 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
 
 
-def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spawned_run():
+def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spawned_run(
+    mocker,
+):
     expected_error = ValueError("test message")
     error_queue = queue.Queue()
     t = InfiniteThreadThatRasiesError(error_queue)
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     t.start()
     t.join()
     assert error_queue.empty() is False

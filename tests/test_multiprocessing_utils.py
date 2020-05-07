@@ -150,7 +150,9 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_run__and
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     mocker.patch.object(
         p, "_commands_for_each_run_iteration", autospec=True, side_effect=expected_error
     )
@@ -219,6 +221,9 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
     mocked_setup = mocker.patch.object(
         p, "_setup_before_loop", autospec=True, side_effect=expected_error
     )
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     p.run(num_iterations=1)
     assert error_queue.empty() is False
     actual_error, _ = error_queue.get_nowait()
@@ -242,7 +247,9 @@ def test_InfiniteProcess__catches_error_in_teardown_after(mocker):
     expected_error = ValueError("error during teardown")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     mocked_teardown = mocker.patch.object(
         p, "_teardown_after_loop", autospec=True, side_effect=expected_error
     )
