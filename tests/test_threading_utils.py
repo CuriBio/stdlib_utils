@@ -2,7 +2,6 @@
 import logging
 import queue
 import threading
-from unittest import mock
 
 import pytest
 from stdlib_utils import get_formatted_stack_trace
@@ -11,6 +10,7 @@ from stdlib_utils import InfiniteThread
 
 from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
+from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 
 def test_InfiniteThread__init__calls_Thread_super(mocker):
@@ -25,7 +25,10 @@ def test_InfiniteThread__init__calls_InfiniteLoopingParallelismMixIn_super(mocke
     mocked_super_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     t = InfiniteThread(error_queue)
     mocked_super_init.assert_called_once_with(
-        t, error_queue, logging.INFO, mock.ANY, mock.ANY
+        t,
+        error_queue,
+        *init_test_args_InfiniteLoopingParallelismMixIn,
+        minimum_iteration_duration_seconds=0.01,
     )
 
 
@@ -146,3 +149,10 @@ def test_InfiniteThread__calls_teardown_after_loop(mocker):
     t.run(num_iterations=1)
     assert error_queue.empty() is True
     assert spied_teardown.call_count == 1
+
+
+def test_InfiniteThread_can_set_minimum_iteration_duration():
+    error_queue = queue.Queue()
+    t = InfiniteThread(error_queue, minimum_iteration_duration_seconds=0.23)
+
+    assert t.get_minimum_iteration_duration_seconds() == 0.23

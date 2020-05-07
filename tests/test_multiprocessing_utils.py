@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 from multiprocessing import Process
 import queue
-from unittest import mock
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
@@ -13,6 +12,7 @@ from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
+from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 # adapted from https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
 # ...but does not seem to be working as expected
@@ -64,9 +64,7 @@ def test_InfiniteProcess_super_InfiniteLoopingParallelismMixIn_is_called_during_
     mocked_init.assert_called_once_with(
         p,
         error_queue,
-        logging.INFO,
-        mock.ANY,
-        mock.ANY,
+        *init_test_args_InfiniteLoopingParallelismMixIn,
         minimum_iteration_duration_seconds=0.01,
     )
 
