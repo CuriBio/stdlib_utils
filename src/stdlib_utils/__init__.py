@@ -2,6 +2,7 @@
 """Helper utilities only requiring the standard library."""
 from . import loggers
 from . import misc
+from . import parallelism_utils
 from . import ports
 from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import PortNotInUseError
@@ -24,7 +25,6 @@ from .parallelism_utils import invoke_process_run_and_check_errors
 from .parallelism_utils import is_queue_eventually_empty
 from .parallelism_utils import is_queue_eventually_not_empty
 from .parallelism_utils import put_log_message_into_queue
-from .parallelism_utils import sleep_so_queue_processes_change
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
@@ -56,8 +56,8 @@ __all__ = [
     "InfiniteThread",
     "InfiniteLoopingParallelismMixIn",
     "put_log_message_into_queue",
-    "sleep_so_queue_processes_change",
     "print_exception",
     "get_current_file_abs_directory",
     "get_current_file_abs_path",
+    "parallelism_utils",
 ]
