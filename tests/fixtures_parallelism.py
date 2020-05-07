@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
+import logging
+from unittest import mock
+
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import InfiniteThread
+
+# Eli (5/7/20): pylint was complaining about duplicate code, so moved to common fixtrue
+init_test_args_InfiniteLoopingParallelismMixIn = [
+    logging.INFO,
+    mock.ANY,
+    mock.ANY,
+]
 
 
 class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):

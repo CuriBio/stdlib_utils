@@ -2,7 +2,6 @@
 import logging
 import queue
 import threading
-from unittest import mock
 
 import pytest
 from stdlib_utils import get_formatted_stack_trace
@@ -11,6 +10,7 @@ from stdlib_utils import InfiniteThread
 
 from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
+from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 
 def test_InfiniteThread__init__calls_Thread_super(mocker):
@@ -25,7 +25,10 @@ def test_InfiniteThread__init__calls_InfiniteLoopingParallelismMixIn_super(mocke
     mocked_super_init = mocker.patch.object(InfiniteLoopingParallelismMixIn, "__init__")
     t = InfiniteThread(error_queue)
     mocked_super_init.assert_called_once_with(
-        t, error_queue, logging.INFO, mock.ANY, mock.ANY
+        t,
+        error_queue,
+        *init_test_args_InfiniteLoopingParallelismMixIn,
+        minimum_iteration_duration_seconds=0.01,
     )
 
 
@@ -106,6 +109,9 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
         t, "_commands_for_each_run_iteration", autospec=True, side_effect=expected_error
     )
     spied_stop = mocker.spy(t, "stop")
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     t.run()
     assert error_queue.empty() is False
     assert spied_stop.call_count == 1
@@ -115,10 +121,15 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
     # assert actual_error == expected_error # Eli (12/24/19): for some reason this asserting doesn't pass...not sure why....so testing class type and str instead
 
 
-def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spawned_run():
+def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spawned_run(
+    mocker,
+):
     expected_error = ValueError("test message")
     error_queue = queue.Queue()
     t = InfiniteThreadThatRasiesError(error_queue)
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     t.start()
     t.join()
     assert error_queue.empty() is False
@@ -146,3 +157,10 @@ def test_InfiniteThread__calls_teardown_after_loop(mocker):
     t.run(num_iterations=1)
     assert error_queue.empty() is True
     assert spied_teardown.call_count == 1
+
+
+def test_InfiniteThread_can_set_minimum_iteration_duration():
+    error_queue = queue.Queue()
+    t = InfiniteThread(error_queue, minimum_iteration_duration_seconds=0.23)
+
+    assert t.get_minimum_iteration_duration_seconds() == 0.23

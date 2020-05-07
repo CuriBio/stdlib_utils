@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import inspect
 import logging
 import multiprocessing
 import queue
@@ -10,9 +9,9 @@ from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
+from stdlib_utils import parallelism_utils
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
-from stdlib_utils import sleep_so_queue_processes_change
 
 from .fixtures_parallelism import InfiniteProcessThatRasiesError
 from .fixtures_parallelism import InfiniteThreadThatRasiesError
@@ -34,7 +33,9 @@ def test_invoke_process_run_and_check_errors__pauses_long_enough_to_process_stan
 ):
     error_queue = multiprocessing.Queue()
     p = InfiniteProcessThatRasiesError(error_queue)
-
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     with pytest.raises(ValueError, match="test message"):
         invoke_process_run_and_check_errors(p)
 
@@ -45,6 +46,9 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcessThatRasiesError(error_queue)
     mocked_log = mocker.patch.object(logging, "exception", autospec=True)
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     with pytest.raises(ValueError, match="test message"):
         invoke_process_run_and_check_errors(p)
     assert error_queue.empty() is True  # the error should have been popped off the queu
@@ -74,6 +78,9 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
     error_queue = queue.Queue()
     p = InfiniteThreadThatRasiesError(error_queue)
     mocked_log = mocker.patch.object(logging, "exception", autospec=True)
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     with pytest.raises(ValueError, match="test message"):
         invoke_process_run_and_check_errors(p)
     assert (
@@ -112,13 +119,15 @@ def test_put_log_message_into_queue__does_not_put_message_in_when_below_threshol
 def test_put_log_message_into_queue__sleeps_after_putting_message_into_regular_queue(
     mocker,
 ):
-    spied_sleep = mocker.spy(time, "sleep")
+    spied_is_queue_eventually_not_empty = mocker.spy(
+        parallelism_utils, "is_queue_eventually_not_empty"
+    )
     q = queue.Queue()
     msg = "hey there"
     put_log_message_into_queue(
         logging.ERROR, msg, q, logging.WARNING, pause_after_put=True,
     )
-    spied_sleep.assert_called_once_with(0.001)
+    spied_is_queue_eventually_not_empty.assert_called_once_with(q)
 
 
 def test_put_log_message_into_queue__does_not_sleep_after_putting_message_into_simplequeue(
@@ -141,21 +150,6 @@ def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value_and
     msg = "hey there"
     put_log_message_into_queue(logging.ERROR, msg, q, logging.WARNING)
     spied_sleep.assert_not_called()
-
-
-def test_sleep_so_queue_processes_change(mocker):
-    spied_sleep = mocker.spy(time, "sleep")
-    sleep_so_queue_processes_change()
-    spied_sleep.assert_called_once_with(0.001)
-
-
-def test_sleep_so_queue_processes_change__raises_deprecation_warning(mocker):
-    # mock inpsect.stack so that it does not appear to be coming internally from inside stdlib_utils
-    mocker.patch.object(
-        inspect, "stack", autospec=True, return_value=[None, [None, "blah"]]
-    )
-    with pytest.warns(DeprecationWarning, match="is_queue_eventually_empty"):
-        sleep_so_queue_processes_change()
 
 
 def test_is_queue_eventually_empty__returns_true_with_empty_threading_queue():

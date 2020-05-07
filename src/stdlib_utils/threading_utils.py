@@ -4,6 +4,7 @@ import logging
 import queue
 import threading
 from typing import Optional
+from typing import Union
 
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 
@@ -22,6 +23,7 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
         fatal_error_reporter: queue.Queue,  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why queue.Queue doesn't have type arguments defined in the stdlib(?)
         lock: Optional[threading.Lock] = None,
         logging_level: int = logging.INFO,
+        minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         threading.Thread.__init__(self)
         InfiniteLoopingParallelismMixIn.__init__(
@@ -30,6 +32,7 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
             logging_level,
             threading.Event(),
             threading.Event(),
+            minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
         )
         self._lock = lock
 
