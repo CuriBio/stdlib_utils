@@ -31,10 +31,14 @@ class InfiniteLoopingParallelismMixIn:
         logging_level: int,
         stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
         soft_stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        teardown_complete_event: Union[
+            threading.Event, multiprocessing.synchronize.Event
+        ],
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
+        self._teardown_complete_event = teardown_complete_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
@@ -100,8 +104,17 @@ class InfiniteLoopingParallelismMixIn:
     def _teardown_after_loop(self) -> None:
         """Perform any necessary teardown after the infinite loop has exited.
 
-        This can be overridden by the subclass.
+        It's the responsibility of this method and parent process to make sure all queues get emptied before join is called.
+
+        This can be overridden by the subclass, but the super method should always be called at the end of the subclass's implementation.
         """
+        if not hasattr(self, "_teardown_complete_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _stop_event attribute."
+            )
+        teardown_complete_event = getattr(self, "_teardown_complete_event")
+
+        teardown_complete_event.set()
 
     def run(
         self,

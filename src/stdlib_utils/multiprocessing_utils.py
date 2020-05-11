@@ -73,6 +73,7 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
             logging_level,
             Event(),
             Event(),
+            Event(),
             minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
         )
 

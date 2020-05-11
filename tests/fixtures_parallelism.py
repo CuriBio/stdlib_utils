@@ -10,6 +10,7 @@ init_test_args_InfiniteLoopingParallelismMixIn = [
     logging.INFO,
     mock.ANY,
     mock.ANY,
+    mock.ANY,
 ]
 
 

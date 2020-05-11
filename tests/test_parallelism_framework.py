@@ -21,6 +21,7 @@ def generic_infinte_looper():
         logging.INFO,
         threading.Event(),
         threading.Event(),
+        threading.Event(),
         minimum_iteration_duration_seconds=0.01,
     )
     return p
