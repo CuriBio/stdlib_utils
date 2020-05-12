@@ -189,7 +189,12 @@ class InfiniteLoopingParallelismMixIn:
         """Execute additional commands inside the run loop."""
 
     def stop(self) -> None:
-        """Safely stops the process."""
+        """Safely stops the process.
+
+        It's the responsibility of _teardown_after_loop and parent
+        process to make sure all queues get emptied before join is
+        called.
+        """
         if not hasattr(self, "_stop_event"):
             raise NotImplementedError(
                 "Classes using this mixin must have a _stop_event attribute."
@@ -203,6 +208,8 @@ class InfiniteLoopingParallelismMixIn:
 
         Typically useful for unit testing. For example waiting until all
         queued up items have been handled.
+
+        It's the responsibility of _teardown_after_loop and parent process to make sure all queues get emptied before join is called.
         """
         if not hasattr(self, "_soft_stop_event"):
             raise NotImplementedError(
