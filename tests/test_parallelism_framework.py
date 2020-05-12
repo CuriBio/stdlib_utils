@@ -6,6 +6,7 @@ import time
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
+from stdlib_utils import is_queue_eventually_empty
 
 
 @pytest.fixture(scope="function", name="patch_init_performance_metrics")
@@ -124,3 +125,35 @@ def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_mea
 
     actual_timepoint = p.get_start_timepoint_of_performance_measurement()
     assert actual_timepoint == expected_timepoint
+
+
+def test_InfiniteLoopingParallelismMixIn__hard_stop__calls_stop():
+    p = generic_infinte_looper()
+    p.hard_stop()
+
+    stop_event = p._stop_event  # pylint:disable=protected-access
+    assert stop_event.is_set() is True
+
+
+def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete_event_to_drain_error_queue(
+    mocker,
+):
+    expected_error = "dummy_error"
+
+    p = generic_infinte_looper()
+    error_queue = p._fatal_error_reporter  # pylint:disable=protected-access
+    teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
+
+    def side_effect(*args, **kwargs):
+        assert is_queue_eventually_empty(error_queue) is False
+        teardown_event.set()
+
+    mocker.patch.object(
+        p, "_teardown_after_loop", autospec=True, side_effect=side_effect
+    )
+    error_queue.put(expected_error)
+
+    actual = p.hard_stop()
+    assert actual["fatal_error_reporter"] == [expected_error]
+
+    assert is_queue_eventually_empty(error_queue) is True

@@ -9,6 +9,7 @@ import multiprocessing.synchronize
 import queue
 import threading
 import time
+from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -210,6 +211,33 @@ class InfiniteLoopingParallelismMixIn:
         soft_stop_event = getattr(self, "_soft_stop_event")
 
         soft_stop_event.set()
+
+    def hard_stop(self) -> Dict[str, Any]:
+        """Stop the process and drain all queues.
+
+        Timeout can be specified which will override waiting for process to tear itself down.
+
+        Items in queues will be returned in a dict
+        """
+        self.stop()
+        item_dict = self._drain_all_queues()
+
+        error_queue = self.get_fatal_error_reporter()
+        error_items = list()
+        while not error_queue.empty():
+            # Tanner (4/12/20): cannot import is_queue_eventually_not_empty for some reason
+            error_items.append(error_queue.get_nowait())  # type: ignore
+
+        item_dict["fatal_error_reporter"] = error_items
+        return item_dict
+
+    def _drain_all_queues(self) -> Dict[str, Any]:
+        """Drain all queues of the process except the fatal_error_reporter.
+
+        Should be overriden by subclasses
+        """
+        # pylint:disable=no-self-use # Tanner (4/12/20): this is neede so method signature matches subclass implementation
+        return dict()
 
     def is_stopped(self) -> bool:
         """Check if the parallel instance is stopped."""
