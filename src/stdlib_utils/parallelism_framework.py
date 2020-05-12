@@ -234,7 +234,9 @@ class InfiniteLoopingParallelismMixIn:
     def _drain_all_queues(self) -> Dict[str, Any]:
         """Drain all queues of the process except the fatal_error_reporter.
 
-        Should be overriden by subclasses
+        fatal_error_reporter will always be drained by hard_stop.
+
+        This method should be overriden by subclasses implementations
         """
         # pylint:disable=no-self-use # Tanner (4/12/20): this is neede so method signature matches subclass implementation
         return dict()
