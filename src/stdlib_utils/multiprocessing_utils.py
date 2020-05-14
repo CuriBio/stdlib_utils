@@ -7,7 +7,6 @@ import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Process
 import multiprocessing.queues
-import queue
 from typing import Any
 from typing import Optional
 from typing import Tuple
@@ -15,32 +14,7 @@ from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
-
-
-class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why SimpleQueue doesn't have type arguments defined in the stdlib(?)
-    """Some additional basic functionality.
-
-    Since SimpleQueue is not technically a class, there are some tricks to subclassing it: https://stackoverflow.com/questions/39496554/cannot-subclass-multiprocessing-queue-in-python-3-5
-    """
-
-    def __init__(self) -> None:
-        ctx = multiprocessing.get_context()
-        super().__init__(ctx=ctx)
-
-    def get_nowait(self) -> Any:
-        """Get value or raise error if empty."""
-        if self.empty():
-            raise queue.Empty()
-        return self.get()
-
-    def put_nowait(self, obj: Any) -> None:
-        """Put without waiting/blocking.
-
-        This is the only option with a SimpleQueue, but this is aliased
-        to put to make the interface compatible with the regular
-        multiprocessing.Queue interface.
-        """
-        self.put(obj)
+from .queue_utils import SimpleMultiprocessingQueue
 
 
 # pylint: disable=duplicate-code

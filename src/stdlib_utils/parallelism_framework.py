@@ -13,16 +13,12 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
-from typing import TYPE_CHECKING
 from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .misc import print_exception
-
-if TYPE_CHECKING:  # pragma: no cover
-    from .parallelism_utils import (  # pylint:disable=cyclic-import
-        SimpleMultiprocessingQueue,
-    )
+from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import SimpleMultiprocessingQueue
 
 
 class InfiniteLoopingParallelismMixIn:
@@ -237,8 +233,12 @@ class InfiniteLoopingParallelismMixIn:
 
         error_queue = self.get_fatal_error_reporter()
         error_items = list()
-        while not error_queue.empty():  # is_queue_eventually_not_empty(error_queue):
-            error_items.append(error_queue.get_nowait())
+        if isinstance(error_queue, SimpleMultiprocessingQueue):
+            while not error_queue.empty():
+                error_items.append(error_queue.get_nowait())
+        else:
+            while is_queue_eventually_not_empty(error_queue):
+                error_items.append(error_queue.get_nowait())
 
         item_dict["fatal_error_reporter"] = error_items
         return item_dict
