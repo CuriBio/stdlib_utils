@@ -232,7 +232,7 @@ class InfiniteLoopingParallelismMixIn:
         error_queue = self.get_fatal_error_reporter()
         error_items = list()
         while not error_queue.empty():
-            # Tanner (4/12/20): cannot import is_queue_eventually_not_empty for some reason
+            # Tanner (5/12/20): cannot import is_queue_eventually_not_empty for some reason
             error_items.append(error_queue.get_nowait())  # type: ignore
 
         item_dict["fatal_error_reporter"] = error_items
@@ -245,7 +245,7 @@ class InfiniteLoopingParallelismMixIn:
 
         This method should be overriden by subclasses implementations
         """
-        # pylint:disable=no-self-use # Tanner (4/12/20): this is neede so method signature matches subclass implementation
+        # pylint:disable=no-self-use # Tanner (5/12/20): this is needed so method signature matches subclass implementation
         return dict()
 
     def is_stopped(self) -> bool:
