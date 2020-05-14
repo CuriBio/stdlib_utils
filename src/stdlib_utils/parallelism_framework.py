@@ -13,10 +13,16 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .misc import print_exception
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .parallelism_utils import (  # pylint:disable=cyclic-import
+        SimpleMultiprocessingQueue,
+    )
 
 
 class InfiniteLoopingParallelismMixIn:
@@ -27,7 +33,7 @@ class InfiniteLoopingParallelismMixIn:
         fatal_error_reporter: Union[
             queue.Queue[str],
             multiprocessing.queues.Queue[Tuple[Exception, str]],
-            multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
+            SimpleMultiprocessingQueue,
         ],
         logging_level: int,
         stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
@@ -89,7 +95,7 @@ class InfiniteLoopingParallelismMixIn:
     ) -> Union[
         queue.Queue[str],
         multiprocessing.queues.Queue[Tuple[Exception, str]],
-        multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
+        SimpleMultiprocessingQueue,
     ]:
         return self._fatal_error_reporter
 
@@ -231,9 +237,8 @@ class InfiniteLoopingParallelismMixIn:
 
         error_queue = self.get_fatal_error_reporter()
         error_items = list()
-        while not error_queue.empty():
-            # Tanner (5/12/20): cannot import is_queue_eventually_not_empty for some reason
-            error_items.append(error_queue.get_nowait())  # type: ignore
+        while not error_queue.empty():  # is_queue_eventually_not_empty(error_queue):
+            error_items.append(error_queue.get_nowait())
 
         item_dict["fatal_error_reporter"] = error_items
         return item_dict

@@ -66,14 +66,13 @@ def invoke_process_run_and_check_errors(
         perform_setup_before_loop=perform_setup_before_loop,
         perform_teardown_after_loop=False,
     )
-    # sleep_so_queue_processes_change()
 
     error_queue = the_process.get_fatal_error_reporter()
     is_item_in_queue = not error_queue.empty()
     if not isinstance(error_queue, SimpleMultiprocessingQueue):
-        is_item_in_queue = is_queue_eventually_not_empty(error_queue)  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
+        is_item_in_queue = is_queue_eventually_not_empty(error_queue)
     if is_item_in_queue:
-        err_info = the_process.get_fatal_error_reporter().get_nowait()  # type: ignore # the subclasses all have an instance of fatal error reporter. there may be a more elegant way to handle this to make mypy happy though... (Eli 2/12/20)
+        err_info = the_process.get_fatal_error_reporter().get_nowait()
         if isinstance(the_process, InfiniteProcess):
             if not isinstance(err_info, tuple):
                 raise NotImplementedError(
