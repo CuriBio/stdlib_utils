@@ -221,14 +221,24 @@ class InfiniteLoopingParallelismMixIn:
 
         soft_stop_event.set()
 
-    def hard_stop(self) -> Dict[str, Any]:
+    def hard_stop(self, timeout: Optional[float] = None) -> Dict[str, Any]:
         """Stop the process and drain all queues.
 
-        Timeout can be specified which will override waiting for process to tear itself down.
+        Timeout can be specified (in seconds) which will override waiting for process to tear itself down.
 
         Items in queues will be returned in a dict
         """
         self.stop()
+        self._teardown_after_loop()
+        start_timepoint = time.perf_counter()
+        while True:
+            if timeout is not None:
+                elapsed_time = time.perf_counter() - start_timepoint
+                if elapsed_time > timeout:
+                    break
+            if self._teardown_complete_event.is_set():
+                break
+
         item_dict = self._drain_all_queues()
 
         error_queue = self.get_fatal_error_reporter()

@@ -180,6 +180,32 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
     error_queue.put(expected_error)
 
     actual = p.hard_stop()
-    assert actual["fatal_error_reporter"] == [expected_error]
+    assert teardown_event.is_set() is True
 
+    assert actual["fatal_error_reporter"] == [expected_error]
+    assert error_queue.empty() is True
+
+
+@pytest.mark.timeout(1)
+def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_for_teardown_complete_event_to_drain_error_queue(
+    mocker,
+):
+    expected_error = "dummy_error"
+
+    p = generic_infinte_looper()
+    error_queue = p._fatal_error_reporter  # pylint:disable=protected-access
+    teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
+
+    def side_effect(*args, **kwargs):
+        assert is_queue_eventually_empty(error_queue) is False
+
+    mocker.patch.object(
+        p, "_teardown_after_loop", autospec=True, side_effect=side_effect
+    )
+    error_queue.put(expected_error)
+
+    actual = p.hard_stop(timeout=0.2)
+    assert teardown_event.is_set() is False
+
+    assert actual["fatal_error_reporter"] == [expected_error]
     assert error_queue.empty() is True
