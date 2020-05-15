@@ -13,8 +13,8 @@ from stdlib_utils import parallelism_utils
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
 
-from .fixtures_parallelism import InfiniteProcessThatRasiesError
-from .fixtures_parallelism import InfiniteThreadThatRasiesError
+from .fixtures_parallelism import InfiniteProcessThatRaisesError
+from .fixtures_parallelism import InfiniteThreadThatRaisesError
 
 
 def test_invoke_process_run_and_check_errors__passes_values_for_InfiniteProcess(mocker):
@@ -32,7 +32,7 @@ def test_invoke_process_run_and_check_errors__pauses_long_enough_to_process_stan
     mocker,
 ):
     error_queue = multiprocessing.Queue()
-    p = InfiniteProcessThatRasiesError(error_queue)
+    p = InfiniteProcessThatRaisesError(error_queue)
     mocker.patch(
         "builtins.print", autospec=True
     )  # don't print the error message to stdout
@@ -44,7 +44,7 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
     mocker,
 ):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcessThatRasiesError(error_queue)
+    p = InfiniteProcessThatRaisesError(error_queue)
     mocked_log = mocker.patch.object(logging, "exception", autospec=True)
     mocker.patch(
         "builtins.print", autospec=True
@@ -76,7 +76,7 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
     mocker,
 ):
     error_queue = queue.Queue()
-    p = InfiniteThreadThatRasiesError(error_queue)
+    p = InfiniteThreadThatRaisesError(error_queue)
     mocked_log = mocker.patch.object(logging, "exception", autospec=True)
     mocker.patch(
         "builtins.print", autospec=True

@@ -19,12 +19,12 @@ class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):
         self._process_can_be_soft_stopped = False
 
 
-class InfiniteProcessThatRasiesError(InfiniteProcess):
+class InfiniteProcessThatRaisesError(InfiniteProcess):
     def _commands_for_each_run_iteration(self):
         raise ValueError("test message")
 
 
-class InfiniteThreadThatRasiesError(InfiniteThread):
+class InfiniteThreadThatRaisesError(InfiniteThread):
     def _commands_for_each_run_iteration(self):
         raise ValueError("test message")
 
