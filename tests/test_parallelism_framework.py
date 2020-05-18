@@ -7,6 +7,7 @@ import time
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import is_queue_eventually_empty
+from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import SimpleMultiprocessingQueue
 
 
@@ -146,7 +147,7 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
     teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
 
     def side_effect(*args, **kwargs):
-        assert is_queue_eventually_empty(error_queue) is False
+        assert is_queue_eventually_not_empty(error_queue) is True
         teardown_event.set()
 
     mocker.patch.object(
@@ -171,7 +172,7 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
     teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
 
     def side_effect(*args, **kwargs):
-        assert is_queue_eventually_empty(error_queue) is False
+        assert is_queue_eventually_not_empty(error_queue) is True
         teardown_event.set()
 
     mocker.patch.object(
@@ -197,7 +198,7 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_f
     teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
 
     def side_effect(*args, **kwargs):
-        assert is_queue_eventually_empty(error_queue) is False
+        assert is_queue_eventually_not_empty(error_queue) is True
 
     mocker.patch.object(
         p, "_teardown_after_loop", autospec=True, side_effect=side_effect
