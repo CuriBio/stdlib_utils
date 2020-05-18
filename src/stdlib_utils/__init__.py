@@ -19,15 +19,15 @@ from .misc import print_exception
 from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
-from .multiprocessing_utils import SimpleMultiprocessingQueue
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .parallelism_utils import invoke_process_run_and_check_errors
-from .parallelism_utils import is_queue_eventually_empty
-from .parallelism_utils import is_queue_eventually_not_empty
 from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
+from .queue_utils import is_queue_eventually_empty
+from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
 
 __all__ = [

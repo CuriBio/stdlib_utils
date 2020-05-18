@@ -9,7 +9,7 @@ from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteThread
 
 from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
-from .fixtures_parallelism import InfiniteThreadThatRasiesError
+from .fixtures_parallelism import InfiniteThreadThatRaisesError
 from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 
@@ -126,7 +126,7 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spaw
 ):
     expected_error = ValueError("test message")
     error_queue = queue.Queue()
-    t = InfiniteThreadThatRasiesError(error_queue)
+    t = InfiniteThreadThatRaisesError(error_queue)
     mocker.patch(
         "builtins.print", autospec=True
     )  # don't print the error message to stdout

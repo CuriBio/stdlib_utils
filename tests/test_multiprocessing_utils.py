@@ -2,7 +2,6 @@
 import logging
 import multiprocessing
 from multiprocessing import Process
-import queue
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
@@ -11,7 +10,7 @@ from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
-from .fixtures_parallelism import InfiniteProcessThatRasiesError
+from .fixtures_parallelism import InfiniteProcessThatRaisesError
 from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 # adapted from https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
@@ -22,29 +21,6 @@ from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 #             return isinstance(other, cls)
 
 #     return MockAny()
-
-
-def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
-    test_queue = SimpleMultiprocessingQueue()
-    expected = "blah"
-    test_queue.put(expected)
-    actual = test_queue.get_nowait()
-    assert actual == expected
-
-
-def test_SimpleMultiprocessingQueue__put_nowait__adds_value_to_queue():
-    test_queue = SimpleMultiprocessingQueue()
-    expected = "blah7"
-    test_queue.put_nowait(expected)
-    actual = test_queue.get_nowait()
-    assert actual == expected
-
-
-@pytest.mark.timeout(0.1)  # set a timeout because the test can hang as a failure mode
-def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
-    test_queue = SimpleMultiprocessingQueue()
-    with pytest.raises(queue.Empty):
-        test_queue.get_nowait()
 
 
 def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
@@ -176,7 +152,7 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spa
     mocker.patch("builtins.print")  # don't print the error message to stdout
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcessThatRasiesError(error_queue)
+    p = InfiniteProcessThatRaisesError(error_queue)
     p.start()
     p.join()
     assert error_queue.empty() is False
@@ -196,7 +172,7 @@ def test_InfiniteProcess__error_queue_is_populated_when_error_queue_is_multiproc
 ):
     mocker.patch("builtins.print")  # don't print the error message to stdout
     error_queue = multiprocessing.Queue()
-    p = InfiniteProcessThatRasiesError(error_queue)
+    p = InfiniteProcessThatRaisesError(error_queue)
     with pytest.raises(ValueError, match="test message"):
         invoke_process_run_and_check_errors(p)
 
