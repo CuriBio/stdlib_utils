@@ -27,8 +27,8 @@ def _eventually_empty(
     ],
 ) -> bool:
     """Help to determine if queue is eventually empty or not."""
-    start_time = time.perf_counter()
-    while time.perf_counter() - start_time < 0.05:
+    start_time = time.process_time()
+    while time.process_time() - start_time < 0.05:
         is_empty = the_queue.empty()
         value_to_check = is_empty
         if not should_be_empty:
