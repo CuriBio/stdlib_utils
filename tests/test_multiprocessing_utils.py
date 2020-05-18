@@ -2,7 +2,6 @@
 import logging
 import multiprocessing
 from multiprocessing import Process
-import queue
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
@@ -22,29 +21,6 @@ from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 #             return isinstance(other, cls)
 
 #     return MockAny()
-
-
-def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
-    test_queue = SimpleMultiprocessingQueue()
-    expected = "blah"
-    test_queue.put(expected)
-    actual = test_queue.get_nowait()
-    assert actual == expected
-
-
-def test_SimpleMultiprocessingQueue__put_nowait__adds_value_to_queue():
-    test_queue = SimpleMultiprocessingQueue()
-    expected = "blah7"
-    test_queue.put_nowait(expected)
-    actual = test_queue.get_nowait()
-    assert actual == expected
-
-
-@pytest.mark.timeout(0.1)  # set a timeout because the test can hang as a failure mode
-def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
-    test_queue = SimpleMultiprocessingQueue()
-    with pytest.raises(queue.Empty):
-        test_queue.get_nowait()
 
 
 def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
