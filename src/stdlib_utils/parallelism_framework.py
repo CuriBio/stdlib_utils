@@ -9,6 +9,7 @@ import multiprocessing.synchronize
 import queue
 import threading
 import time
+from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -16,25 +17,40 @@ from typing import Union
 
 from .misc import get_formatted_stack_trace
 from .misc import print_exception
+from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import SimpleMultiprocessingQueue
 
 
 class InfiniteLoopingParallelismMixIn:
-    """Mix-in for infinite looping."""
+    """Mix-in for infinite looping.
+
+    Args:
+        fatal_error_reporter: a queue to report any fatal unhandled errors back to the thread that started this process
+        logging_level: what threshold to use for logging events
+        stop_event: When set (typically by calling .stop()), this will cause the infinite loop to exit on the next iteration
+        soft_stop_event: When set (typically by calling .soft_stop()), this will cause the infinite loop to exit the next iteration that all conditionals indicating a soft_stop is possible are met (typically used to ensure all incoming tasks/queues are empty and there is nothing currently available to process)
+        teardown_complete_event: After the infinite loop is exited, the _teardown_after_loop() method will be called. This event can be monitored by the parent thread to determine when the teardown has completed and the process is ready to have any needed additional clean-up performed by the parent before the parent calls .join().
+        minimum_iteration_duration_seconds: In order for the process not to unnecessarily consume CPU resources while looping, the loop will sleep at the end of each iteration until this threshold duration is met.
+    """
 
     def __init__(
         self,
         fatal_error_reporter: Union[
             queue.Queue[str],
             multiprocessing.queues.Queue[Tuple[Exception, str]],
-            multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
+            SimpleMultiprocessingQueue,
         ],
         logging_level: int,
         stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
         soft_stop_event: Union[threading.Event, multiprocessing.synchronize.Event],
+        teardown_complete_event: Union[
+            threading.Event, multiprocessing.synchronize.Event
+        ],
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
+        self._teardown_complete_event = teardown_complete_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
@@ -84,7 +100,7 @@ class InfiniteLoopingParallelismMixIn:
     ) -> Union[
         queue.Queue[str],
         multiprocessing.queues.Queue[Tuple[Exception, str]],
-        multiprocessing.queues.SimpleQueue[Tuple[Exception, str]],
+        SimpleMultiprocessingQueue,
     ]:
         return self._fatal_error_reporter
 
@@ -100,8 +116,17 @@ class InfiniteLoopingParallelismMixIn:
     def _teardown_after_loop(self) -> None:
         """Perform any necessary teardown after the infinite loop has exited.
 
-        This can be overridden by the subclass.
+        It's the responsibility of this method and parent process to make sure all queues get emptied before join is called.
+
+        This can be overridden by the subclass, but the super method should always be called at the end of the subclass's implementation.
         """
+        if not hasattr(self, "_teardown_complete_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _teardown_complete_event attribute."
+            )
+        teardown_complete_event = getattr(self, "_teardown_complete_event")
+
+        teardown_complete_event.set()
 
     def run(
         self,
@@ -175,7 +200,14 @@ class InfiniteLoopingParallelismMixIn:
         """Execute additional commands inside the run loop."""
 
     def stop(self) -> None:
-        """Safely stops the process."""
+        """Trigger the infinite loop to break on next iteration.
+
+        This will leave any unprocessed tasks still in incoming queues, which must be emptied before the process can be joined.
+
+        It's the responsibility of _teardown_after_loop and parent
+        process to make sure all queues get emptied before join is
+        called.
+        """
         if not hasattr(self, "_stop_event"):
             raise NotImplementedError(
                 "Classes using this mixin must have a _stop_event attribute."
@@ -185,10 +217,12 @@ class InfiniteLoopingParallelismMixIn:
         stop_event.set()
 
     def soft_stop(self) -> None:
-        """Stop the process when the process indicates it is OK to do so.
+        """Stop the infinite loop when the process indicates it is OK to do so.
 
         Typically useful for unit testing. For example waiting until all
         queued up items have been handled.
+
+        It's the responsibility of _teardown_after_loop and parent process to make sure all queues get emptied before join is called.
         """
         if not hasattr(self, "_soft_stop_event"):
             raise NotImplementedError(
@@ -197,6 +231,48 @@ class InfiniteLoopingParallelismMixIn:
         soft_stop_event = getattr(self, "_soft_stop_event")
 
         soft_stop_event.set()
+
+    def hard_stop(self, timeout: Optional[float] = None) -> Dict[str, Any]:
+        """Stop the infinite loop and drain all queues.
+
+        Timeout can be specified (in seconds) which will override waiting for process to tear itself down.
+
+        Items in queues will be returned in a dict
+        """
+        self.stop()
+        self._teardown_after_loop()
+        start_timepoint = time.perf_counter()
+        while True:
+            if timeout is not None:
+                elapsed_time = time.perf_counter() - start_timepoint
+                if elapsed_time > timeout:
+                    break
+            if self._teardown_complete_event.is_set():
+                break
+
+        item_dict = self._drain_all_queues()
+
+        error_queue = self.get_fatal_error_reporter()
+        error_items = list()
+        if isinstance(error_queue, SimpleMultiprocessingQueue):
+            while not error_queue.empty():
+                error_items.append(error_queue.get_nowait())
+        else:
+            while is_queue_eventually_not_empty(error_queue):
+                error_items.append(error_queue.get_nowait())
+
+        item_dict["fatal_error_reporter"] = error_items
+        return item_dict
+
+    def _drain_all_queues(self) -> Dict[str, Any]:
+        """Drain all queues of the process except the fatal_error_reporter.
+
+        fatal_error_reporter will always be drained by hard_stop.
+
+        This method should be overriden by subclasses implementations
+        """
+        # pylint:disable=no-self-use # Tanner (5/12/20): this is needed so method signature matches subclass implementation
+        return dict()
 
     def is_stopped(self) -> bool:
         """Check if the parallel instance is stopped."""
