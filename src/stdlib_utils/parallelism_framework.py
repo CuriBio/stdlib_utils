@@ -22,7 +22,16 @@ from .queue_utils import SimpleMultiprocessingQueue
 
 
 class InfiniteLoopingParallelismMixIn:
-    """Mix-in for infinite looping."""
+    """Mix-in for infinite looping.
+
+    Args:
+        fatal_error_reporter: a queue to report any fatal unhandled errors back to the thread that started this process
+        logging_level: what threshold to use for logging events
+        stop_event: When set (typically by calling .stop()), this will cause the infinite loop to exit on the next iteration
+        soft_stop_event: When set (typically by calling .soft_stop()), this will cause the infinite loop to exit the next iteration that all conditionals indicating a soft_stop is possible are met (typically used to ensure all incoming tasks/queues are empty and there is nothing currently available to process)
+        teardown_complete_event: After the infinite loop is exited, the _teardown_after_loop() method will be called. This event can be monitored by the parent thread to determine when the teardown has completed and the process is ready to have any needed additional clean-up performed by the parent before the parent calls .join().
+        minimum_iteration_duration_seconds: In order for the process not to unnecessarily consume CPU resources while looping, the loop will sleep at the end of each iteration until this threshold duration is met.
+    """
 
     def __init__(
         self,
@@ -113,7 +122,7 @@ class InfiniteLoopingParallelismMixIn:
         """
         if not hasattr(self, "_teardown_complete_event"):
             raise NotImplementedError(
-                "Classes using this mixin must have a _stop_event attribute."
+                "Classes using this mixin must have a _teardown_complete_event attribute."
             )
         teardown_complete_event = getattr(self, "_teardown_complete_event")
 
@@ -191,7 +200,9 @@ class InfiniteLoopingParallelismMixIn:
         """Execute additional commands inside the run loop."""
 
     def stop(self) -> None:
-        """Safely stops the process.
+        """Trigger the infinite loop to break on next iteration.
+
+        This will leave any unprocessed tasks still in incoming queues, which must be emptied before the process can be joined.
 
         It's the responsibility of _teardown_after_loop and parent
         process to make sure all queues get emptied before join is
@@ -206,7 +217,7 @@ class InfiniteLoopingParallelismMixIn:
         stop_event.set()
 
     def soft_stop(self) -> None:
-        """Stop the process when the process indicates it is OK to do so.
+        """Stop the infinite loop when the process indicates it is OK to do so.
 
         Typically useful for unit testing. For example waiting until all
         queued up items have been handled.
@@ -222,7 +233,7 @@ class InfiniteLoopingParallelismMixIn:
         soft_stop_event.set()
 
     def hard_stop(self, timeout: Optional[float] = None) -> Dict[str, Any]:
-        """Stop the process and drain all queues.
+        """Stop the infinite loop and drain all queues.
 
         Timeout can be specified (in seconds) which will override waiting for process to tear itself down.
 

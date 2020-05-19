@@ -5,6 +5,8 @@ from . import misc
 from . import parallelism_utils
 from . import ports
 from .exceptions import BlankAbsoluteResourcePathError
+from .exceptions import MultipleMatchingXmlElementsError
+from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
 from .loggers import configure_logging
@@ -29,6 +31,7 @@ from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
+from .xml import find_exactly_one_xml_element
 
 __all__ = [
     "configure_logging",
@@ -44,6 +47,9 @@ __all__ = [
     "InfiniteProcess",
     "SimpleMultiprocessingQueue",
     "invoke_process_run_and_check_errors",
+    "find_exactly_one_xml_element",
+    "MultipleMatchingXmlElementsError",
+    "NoMatchingXmlElementError",
     "ports",
     "confirm_port_in_use",
     "confirm_port_available",
