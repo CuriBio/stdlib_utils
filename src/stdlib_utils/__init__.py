@@ -21,6 +21,7 @@ from .misc import print_exception
 from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
+from .multiprocessing_utils import safe_get
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .parallelism_utils import invoke_process_run_and_check_errors
 from .parallelism_utils import put_log_message_into_queue
@@ -66,4 +67,5 @@ __all__ = [
     "get_current_file_abs_directory",
     "get_current_file_abs_path",
     "parallelism_utils",
+    "safe_get",
 ]
