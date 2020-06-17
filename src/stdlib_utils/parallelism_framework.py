@@ -46,11 +46,15 @@ class InfiniteLoopingParallelismMixIn:
         teardown_complete_event: Union[
             threading.Event, multiprocessing.synchronize.Event
         ],
+        start_up_complete_event: Union[
+            threading.Event, multiprocessing.synchronize.Event
+        ],
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
         self._teardown_complete_event = teardown_complete_event
+        self._start_up_complete_event = start_up_complete_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
@@ -155,6 +159,7 @@ class InfiniteLoopingParallelismMixIn:
                 print_exception(e, "cf477f32-9797-417e-a157-ea6e0c4f25d1")
                 self._report_fatal_error(e)
                 return
+        self._start_up_complete_event.set()
         while True:
             start_timepoint_of_iteration = time.perf_counter_ns()
             self._process_can_be_soft_stopped = True
@@ -273,6 +278,21 @@ class InfiniteLoopingParallelismMixIn:
         """
         # pylint:disable=no-self-use # Tanner (5/12/20): this is needed so method signature matches subclass implementation
         return dict()
+
+    def is_start_up_complete(self) -> bool:
+        """Check if the parallel instance has completed start up."""
+        if not hasattr(self, "_start_up_complete_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _start_up_complete_event attribute."
+            )
+        start_up_complete_event = getattr(self, "_start_up_complete_event")
+
+        is_set = start_up_complete_event.is_set()
+        if not isinstance(is_set, bool):
+            raise NotImplementedError(
+                "The return value from this should always be a bool."
+            )
+        return is_set
 
     def is_stopped(self) -> bool:
         """Check if the parallel instance is stopped."""
