@@ -25,6 +25,7 @@ def generic_infinte_looper():
         threading.Event(),
         threading.Event(),
         threading.Event(),
+        threading.Event(),
         minimum_iteration_duration_seconds=0.01,
     )
     return p
@@ -210,3 +211,28 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_f
 
     assert actual["fatal_error_reporter"] == [expected_error]
     assert error_queue.empty() is True
+
+
+@pytest.mark.parametrize(
+    "perform_setup_before_loop,test_description",
+    [
+        (False, "sets start_up_complete_event with no setup before loop"),
+        (True, "sets start_up_complete_event with setup before loop"),
+    ],
+)
+def test_InfiniteLoopingParallelismMixIn__always_sets_start_up_complete_event_before_entering_loop(
+    perform_setup_before_loop, test_description, mocker
+):
+    p = generic_infinte_looper()
+    start_up_complete_event = (
+        p._start_up_complete_event  # pylint:disable=protected-access
+    )
+    spied_set = mocker.spy(start_up_complete_event, "set")
+
+    assert start_up_complete_event.is_set() is False
+    assert p.is_start_up_complete() is False
+
+    p.run(num_iterations=2, perform_setup_before_loop=perform_setup_before_loop)
+    assert start_up_complete_event.is_set() is True
+    assert p.is_start_up_complete() is True
+    assert spied_set.call_count == 1
