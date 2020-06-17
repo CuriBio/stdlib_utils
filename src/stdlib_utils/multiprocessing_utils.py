@@ -6,9 +6,7 @@ import logging
 import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Process
-from multiprocessing import Queue
 import multiprocessing.queues
-from queue import Empty
 from typing import Any
 from typing import Optional
 from typing import Tuple
@@ -17,13 +15,6 @@ from typing import Union
 from .misc import get_formatted_stack_trace
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .queue_utils import SimpleMultiprocessingQueue
-
-
-def safe_get(queue: Queue[Any]) -> Any:  # pylint: disable=unsubscriptable-object
-    try:
-        return queue.get(block=True, timeout=0.02)
-    except Empty:
-        return None
 
 
 # pylint: disable=duplicate-code

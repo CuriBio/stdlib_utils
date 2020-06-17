@@ -2,13 +2,11 @@
 import logging
 import multiprocessing
 from multiprocessing import Process
-from multiprocessing import Queue
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
-from stdlib_utils import safe_get
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
@@ -23,23 +21,6 @@ from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 #             return isinstance(other, cls)
 
 #     return MockAny()
-
-
-def test_safe_get__returns_expected_items():
-    expected_items = ["item1", "item2", "item3"]
-    actual_items = []
-
-    q = Queue()
-    for item in expected_items:
-        q.put(item)
-
-    num_items = len(expected_items)
-    for _ in range(num_items + 1):
-        next_item = safe_get(q)
-        actual_items.append(next_item)
-
-    expected_items.append(None)
-    assert actual_items == expected_items
 
 
 def test_InfiniteProcess_super_Process_is_called_during_init(mocker):

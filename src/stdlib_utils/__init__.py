@@ -5,6 +5,7 @@ from . import misc
 from . import parallelism_utils
 from . import ports
 from .exceptions import BlankAbsoluteResourcePathError
+from .exceptions import LogMessageNotFoundError
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
@@ -21,15 +22,16 @@ from .misc import print_exception
 from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
-from .multiprocessing_utils import safe_get
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .parallelism_utils import invoke_process_run_and_check_errors
 from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
+from .queue_utils import find_log_message_in_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import safe_get
 from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
 from .xml import find_exactly_one_xml_element
@@ -68,4 +70,6 @@ __all__ = [
     "get_current_file_abs_path",
     "parallelism_utils",
     "safe_get",
+    "find_log_message_in_queue",
+    "LogMessageNotFoundError",
 ]

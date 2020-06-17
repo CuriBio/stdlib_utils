@@ -37,3 +37,7 @@ class NoMatchingXmlElementError(Exception):
         super().__init__(
             f"There was no child element named '{name}' found in the XML element {node} with children {list(node)}"
         )
+
+
+class LogMessageNotFoundError(Exception):
+    pass
