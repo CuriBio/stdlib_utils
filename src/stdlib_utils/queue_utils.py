@@ -96,15 +96,12 @@ def find_log_message_in_queue(
         if isinstance(expected_message, str):
             if isinstance(item_message, str):
                 log_message = item_message if expected_message in item_message else None
-        elif isinstance(expected_message, dict):
-            if isinstance(item_message, dict):
-                log_message = (
-                    item_message
-                    if all(
-                        key in item_message.keys() for key in expected_message.keys()
-                    )
-                    else None
-                )
+        elif isinstance(item_message, dict):
+            log_message = (
+                item_message
+                if all(key in item_message.keys() for key in expected_message.keys())
+                else None
+            )
         if log_message is not None:
             return log_message
     raise LogMessageNotFoundError(
