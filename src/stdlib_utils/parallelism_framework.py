@@ -7,10 +7,12 @@ import multiprocessing
 import multiprocessing.queues
 import multiprocessing.synchronize
 import queue
+from statistics import stdev
 import threading
 import time
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -60,6 +62,7 @@ class InfiniteLoopingParallelismMixIn:
         self._logging_level = logging_level
         self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
         self._idle_iteration_time_ns = 0
+        self._percent_use_values: List[float] = list()
         self._init_performance_measurements()
 
     def _init_performance_measurements(self) -> None:
@@ -88,8 +91,20 @@ class InfiniteLoopingParallelismMixIn:
                 - self._start_timepoint_of_last_performance_measurement
             )
         )
+        self._percent_use_values.append(out_dict["percent_use"])
         self._reset_performance_measurements()
         return out_dict
+
+    def get_percent_use_metrics(self) -> Dict[str, float]:
+        metrics = {
+            "max": max(self._percent_use_values),
+            "min": min(self._percent_use_values),
+            "stdev": round(stdev(self._percent_use_values), 6),
+            "mean": round(
+                sum(self._percent_use_values) / len(self._percent_use_values), 6
+            ),
+        }
+        return metrics
 
     def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
         return self._minimum_iteration_duration_seconds

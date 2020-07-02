@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import queue
+from statistics import stdev
 import threading
 import time
 
@@ -132,14 +133,17 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     )
 
     p = generic_infinte_looper()
+    percent_use_values = p._percent_use_values  # pylint:disable=protected-access
 
     p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
     actual_first_return = p.reset_performance_tracker()
     assert actual_first_return["percent_use"] == expected_percent_use_1
+    assert percent_use_values[0] == expected_percent_use_1
 
     p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
     actual_second_return = p.reset_performance_tracker()
     assert actual_second_return["percent_use"] == expected_percent_use_2
+    assert percent_use_values[1] == expected_percent_use_2
 
 
 def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_measurement(
@@ -262,3 +266,20 @@ def test_InfiniteLoopingParallelismMixIn__always_sets_start_up_complete_event_be
     assert start_up_complete_event.is_set() is True
     assert p.is_start_up_complete() is True
     assert spied_set.call_count == 1
+
+
+def test_InfiniteLoopingParallelismMixIn__get_percent_use_metrics__returns_correct_values(
+    mocker,
+):
+    p = generic_infinte_looper()
+
+    expected_percent_use_vals = [30.0, 45.2, 23.1]
+    p._percent_use_values = expected_percent_use_vals  # pylint:disable=protected-access
+
+    actual = p.get_percent_use_metrics()
+    assert actual["max"] == max(expected_percent_use_vals)
+    assert actual["min"] == min(expected_percent_use_vals)
+    assert actual["stdev"] == round(stdev(expected_percent_use_vals), 6)
+    assert actual["mean"] == round(
+        sum(expected_percent_use_vals) / len(expected_percent_use_vals), 6
+    )
