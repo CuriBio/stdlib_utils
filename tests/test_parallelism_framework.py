@@ -70,7 +70,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__initially_r
         time,
         "perf_counter_ns",
         autospec=True,
-        side_effect=[expected_first_return, expected_second_return, 0],
+        side_effect=[expected_first_return, 0, expected_second_return, 0, 0],
     )
 
     p = generic_infinte_looper()
@@ -101,7 +101,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__counts_idle
         time,
         "perf_counter_ns",
         autospec=True,
-        side_effect=[0, time_of_first_iter_ns, 0, time_of_second_iter_ns, 0, 0],
+        side_effect=[0, time_of_first_iter_ns, 0, time_of_second_iter_ns, 0, 0, 0],
     )
     mocker.patch.object(time, "sleep", autospec=True)
 
@@ -114,6 +114,32 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__counts_idle
         allowed_time_per_iter_ns * 2 - time_of_first_iter_ns - time_of_second_iter_ns
     )
     assert total_idle_time == expected_idle_time
+
+
+def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and_stores_percent_use(
+    mocker,
+):
+    expected_first_return = 11000
+    expected_second_return = 12000
+    idle_time = 10000
+    expected_percent_use_1 = 100 * (1 - idle_time / expected_first_return)
+    expected_percent_use_2 = 100 * (1 - idle_time / expected_second_return)
+    mocker.patch.object(
+        time,
+        "perf_counter_ns",
+        autospec=True,
+        side_effect=[0, expected_first_return, 0, expected_second_return, 0],
+    )
+
+    p = generic_infinte_looper()
+
+    p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
+    actual_first_return = p.reset_performance_tracker()
+    assert actual_first_return["percent_use"] == expected_percent_use_1
+
+    p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
+    actual_second_return = p.reset_performance_tracker()
+    assert actual_second_return["percent_use"] == expected_percent_use_2
 
 
 def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_measurement(
