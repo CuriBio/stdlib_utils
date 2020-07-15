@@ -5,6 +5,8 @@ from . import misc
 from . import parallelism_utils
 from . import ports
 from .exceptions import BlankAbsoluteResourcePathError
+from .exceptions import LogFolderDoesNotExistError
+from .exceptions import LogFolderGivenWithoutFilePrefixError
 from .exceptions import LogMessageNotFoundError
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
@@ -72,4 +74,6 @@ __all__ = [
     "safe_get",
     "find_log_message_in_queue",
     "LogMessageNotFoundError",
+    "LogFolderGivenWithoutFilePrefixError",
+    "LogFolderDoesNotExistError",
 ]
