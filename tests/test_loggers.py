@@ -6,7 +6,10 @@ import time
 from unittest.mock import ANY
 
 from freezegun import freeze_time
+import pytest
 from stdlib_utils import configure_logging
+from stdlib_utils import LogFolderDoesNotExistError
+from stdlib_utils import LogFolderGivenWithoutFilePrefixError
 from stdlib_utils import loggers
 from stdlib_utils import misc
 
@@ -72,3 +75,35 @@ def test_configure_logging__with_file_name__creates_dir_using_resource_path(mock
         assert file_handler.baseFilename == os.path.join(
             tmp_dir, "logs", "my_log__2020_02_10_131722.txt"
         )
+
+
+@freeze_time("2020-07-15 10:35:08")
+def test_configure_logging__with_path_to_log_folder_and_file_name__uses_path_as_logging_folder(
+    mocker,
+):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        spied_basic_config = mocker.patch.object(logging, "basicConfig")
+        configure_logging(log_file_prefix="my_log", path_to_log_folder=tmp_dir)
+
+        assert spied_basic_config.call_count == 1
+        _, kwargs = spied_basic_config.call_args_list[0]
+        assert set(kwargs.keys()) == set(["level", "format", "handlers"])
+
+        actual_handlers = kwargs["handlers"]
+        assert len(actual_handlers) == 2
+        file_handler = actual_handlers[1]
+        assert file_handler.baseFilename == os.path.join(
+            tmp_dir, "my_log__2020_07_15_103508.txt"
+        )
+
+
+def test_configure_logging__raises_error_if_path_to_folder_does_not_exist(mocker):
+    with pytest.raises(LogFolderDoesNotExistError):
+        configure_logging(log_file_prefix="my_log", path_to_log_folder="fake_folder")
+
+
+def test_configure_logging__raises_error_if_path_to_folder_given_without_file_name(
+    mocker,
+):
+    with pytest.raises(LogFolderGivenWithoutFilePrefixError):
+        configure_logging(path_to_log_folder="dir")
