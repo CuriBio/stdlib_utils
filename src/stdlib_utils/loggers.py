@@ -32,7 +32,7 @@ def configure_logging(
         log_folder: str
         if path_to_log_folder is not None:
             if not os.path.isdir(path_to_log_folder):
-                raise LogFolderDoesNotExistError()
+                raise LogFolderDoesNotExistError(path_to_log_folder)
             log_folder = path_to_log_folder
         else:
             log_folder = resource_path("logs", base_path=os.getcwd())
