@@ -347,3 +347,19 @@ class InfiniteLoopingParallelismMixIn:
                 "Classes using this mixin must have a _soft_stop_event as either a threading.Event or multiprocessing.Event"
             )
         return soft_stop_event.is_set()
+
+    def is_teardown_complete(self) -> bool:
+        """Check if the parallel instance has completed tearing itself down."""
+        if not hasattr(self, "_teardown_complete_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _teardown_complete_event attribute."
+            )
+        teardown_complete_event = getattr(self, "_teardown_complete_event")
+        if not isinstance(
+            teardown_complete_event,
+            (threading.Event, multiprocessing.synchronize.Event),
+        ):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _teardown_complete_event as either a threading.Event or multiprocessing.Event"
+            )
+        return teardown_complete_event.is_set()
