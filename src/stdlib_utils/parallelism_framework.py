@@ -95,6 +95,9 @@ class InfiniteLoopingParallelismMixIn:
         self._reset_performance_measurements()
         return out_dict
 
+    def get_percent_use_values(self) -> List[float]:
+        return self._percent_use_values
+
     def get_percent_use_metrics(self) -> Dict[str, float]:
         metrics = {
             "max": max(self._percent_use_values),

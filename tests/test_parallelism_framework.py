@@ -19,9 +19,22 @@ def fixture_patch_init_performance_metrics(mocker):
     )
 
 
-def generic_infinte_looper():
+def generic_infinite_looper():
     p = InfiniteLoopingParallelismMixIn(
         queue.Queue(),
+        logging.INFO,
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+        minimum_iteration_duration_seconds=0.01,
+    )
+    return p
+
+
+def simple_infinite_looper():
+    p = InfiniteLoopingParallelismMixIn(
+        SimpleMultiprocessingQueue(),
         logging.INFO,
         threading.Event(),
         threading.Event(),
@@ -43,7 +56,7 @@ def test_InfiniteLoopingParallelismMixIn__sleeps_during_loop_for_time_remaining_
         side_effect=[0, mocked_length_of_time_to_execute_ns, 0],
     )
     mocked_sleep = mocker.patch.object(time, "sleep", autospec=True)
-    generic_infinte_looper().run(num_iterations=2, perform_setup_before_loop=False)
+    generic_infinite_looper().run(num_iterations=2, perform_setup_before_loop=False)
     expected_time_to_sleep_seconds = round(
         0.01 - mocked_length_of_time_to_execute_ns / 10 ** 9, 10
     )
@@ -58,7 +71,7 @@ def test_InfiniteLoopingParallelismMixIn__does_not_sleep_during_loop_if_minimum_
         time, "perf_counter_ns", autospec=True, side_effect=[0, 0.1 * 10 ** 9, 0],
     )
     mocked_sleep = mocker.patch.object(time, "sleep", autospec=True)
-    generic_infinte_looper().run(num_iterations=2, perform_setup_before_loop=False)
+    generic_infinite_looper().run(num_iterations=2, perform_setup_before_loop=False)
     assert mocked_sleep.call_count == 0
 
 
@@ -74,7 +87,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__initially_r
         side_effect=[expected_first_return, 0, expected_second_return, 0, 0],
     )
 
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
 
     actual_first_return = p.reset_performance_tracker()
     assert "start_timepoint_of_measurements" in actual_first_return
@@ -95,7 +108,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__initially_r
 def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__counts_idle_time(
     mocker,
 ):
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
     time_of_first_iter_ns = 2 * 10 ** 6
     time_of_second_iter_ns = 1 * 10 ** 6
     mocker.patch.object(
@@ -132,8 +145,8 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
         side_effect=[0, expected_first_return, 0, expected_second_return, 0],
     )
 
-    p = generic_infinte_looper()
-    percent_use_values = p._percent_use_values  # pylint:disable=protected-access
+    p = generic_infinite_looper()
+    percent_use_values = p.get_percent_use_values()
 
     p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
     actual_first_return = p.reset_performance_tracker()
@@ -154,18 +167,19 @@ def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_mea
         time, "perf_counter_ns", autospec=True, side_effect=[expected_timepoint],
     )
 
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
 
     actual_timepoint = p.get_start_timepoint_of_performance_measurement()
     assert actual_timepoint == expected_timepoint
 
 
-def test_InfiniteLoopingParallelismMixIn__hard_stop__calls_stop():
-    p = generic_infinte_looper()
-    p.hard_stop()
+def test_InfiniteLoopingParallelismMixIn__hard_stop__calls_stop(mocker):
+    p = generic_infinite_looper()
+    spied_stop = mocker.spy(p, "stop")
 
-    stop_event = p._stop_event  # pylint:disable=protected-access
-    assert stop_event.is_set() is True
+    p.hard_stop()
+    assert p.is_stopped() is True
+    spied_stop.assert_called_once()
 
 
 def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete_event_to_drain_error_queue(
@@ -173,7 +187,7 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
 ):
     expected_error = "dummy_error"
 
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
     error_queue = p.get_fatal_error_reporter()
     teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
 
@@ -197,9 +211,8 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
 ):
     expected_error = "dummy_error"
 
-    p = generic_infinte_looper()
-    error_queue = SimpleMultiprocessingQueue()
-    p._fatal_error_reporter = error_queue  # pylint:disable=protected-access
+    p = simple_infinite_looper()
+    error_queue = p.get_fatal_error_reporter()
     teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
 
     def side_effect(*args, **kwargs):
@@ -224,7 +237,7 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_f
 ):
     expected_error = "dummy_error"
 
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
     error_queue = p.get_fatal_error_reporter()
 
     def side_effect(*args, **kwargs):
@@ -252,28 +265,26 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_f
 def test_InfiniteLoopingParallelismMixIn__always_sets_start_up_complete_event_before_entering_loop(
     perform_setup_before_loop, test_description, mocker
 ):
-    p = generic_infinte_looper()
-    start_up_complete_event = (
-        p._start_up_complete_event  # pylint:disable=protected-access
-    )
-    spied_set = mocker.spy(start_up_complete_event, "set")
-
-    assert start_up_complete_event.is_set() is False
+    p = generic_infinite_looper()
     assert p.is_start_up_complete() is False
-
-    p.run(num_iterations=2, perform_setup_before_loop=perform_setup_before_loop)
-    assert start_up_complete_event.is_set() is True
+    p.run(num_iterations=1, perform_setup_before_loop=perform_setup_before_loop)
     assert p.is_start_up_complete() is True
-    assert spied_set.call_count == 1
 
 
 def test_InfiniteLoopingParallelismMixIn__get_percent_use_metrics__returns_correct_values(
     mocker,
 ):
-    p = generic_infinte_looper()
+    p = generic_infinite_looper()
 
-    expected_percent_use_vals = [30.0, 45.2, 23.1]
-    p._percent_use_values = expected_percent_use_vals  # pylint:disable=protected-access
+    # create percent use values
+    p.run(num_iterations=10)
+    p.reset_performance_tracker()
+    p.run(num_iterations=10)
+    p.reset_performance_tracker()
+    p.run(num_iterations=10)
+    p.reset_performance_tracker()
+
+    expected_percent_use_vals = p.get_percent_use_values()
 
     actual = p.get_percent_use_metrics()
     assert actual["max"] == max(expected_percent_use_vals)
