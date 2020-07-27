@@ -193,7 +193,6 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
     spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
-    spied_teardown = mocker.spy(p, "_teardown_after_loop")
     mocked_setup = mocker.patch.object(
         p, "_setup_before_loop", autospec=True, side_effect=expected_error
     )
@@ -205,7 +204,7 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
     actual_error, _ = error_queue.get_nowait()
     assert mocked_setup.call_count == 1
     assert spied_run.call_count == 0
-    assert spied_teardown.call_count == 0
+    assert p.is_teardown_complete() is False
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
 
@@ -213,10 +212,9 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
 def test_InfiniteProcess__calls_teardown_after_loop(mocker):
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-    spied_teardown = mocker.spy(p, "_teardown_after_loop")
     p.run(num_iterations=1)
     assert error_queue.empty() is True
-    assert spied_teardown.call_count == 1
+    assert p.is_teardown_complete() is True
 
 
 def test_InfiniteProcess__catches_error_in_teardown_after(mocker):

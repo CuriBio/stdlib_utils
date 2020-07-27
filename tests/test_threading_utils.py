@@ -153,10 +153,9 @@ def test_InfiniteThread__calls_setup_before_loop(mocker):
 def test_InfiniteThread__calls_teardown_after_loop(mocker):
     error_queue = queue.Queue()
     t = InfiniteThread(error_queue)
-    spied_teardown = mocker.spy(t, "_teardown_after_loop")
     t.run(num_iterations=1)
     assert error_queue.empty() is True
-    assert spied_teardown.call_count == 1
+    assert t.is_teardown_complete() is True
 
 
 def test_InfiniteThread_can_set_minimum_iteration_duration():
