@@ -133,28 +133,28 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__counts_idle
 def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and_stores_percent_use(
     mocker,
 ):
-    expected_first_return = 11000
-    expected_second_return = 12000
-    idle_time = 10000
-    expected_percent_use_1 = 100 * (1 - idle_time / expected_first_return)
-    expected_percent_use_2 = 100 * (1 - idle_time / expected_second_return)
-    mocker.patch.object(
-        time,
-        "perf_counter_ns",
-        autospec=True,
-        side_effect=[0, expected_first_return, 0, expected_second_return, 0],
-    )
-
     p = generic_infinite_looper()
     percent_use_values = p.get_percent_use_values()
 
-    p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
+    mocked_perf_counter = mocker.spy(
+        p, "get_elapsed_time_since_last_performance_measurement"
+    )
+
+    p.run(num_iterations=3)
+    idle_time_secs = p.get_idle_time_ns()
     actual_first_return = p.reset_performance_tracker()
+    expected_percent_use_1 = 100 * (
+        1 - idle_time_secs / mocked_perf_counter.return_value
+    )
     assert actual_first_return["percent_use"] == expected_percent_use_1
     assert percent_use_values[0] == expected_percent_use_1
 
-    p._idle_iteration_time_ns = idle_time  # pylint:disable=protected-access
+    p.run(num_iterations=5)
+    idle_time_secs = p.get_idle_time_ns()
     actual_second_return = p.reset_performance_tracker()
+    expected_percent_use_2 = 100 * (
+        1 - idle_time_secs / mocked_perf_counter.return_value
+    )
     assert actual_second_return["percent_use"] == expected_percent_use_2
     assert percent_use_values[1] == expected_percent_use_2
 
@@ -189,20 +189,18 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
 
     p = generic_infinite_looper()
     error_queue = p.get_fatal_error_reporter()
-    teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
+    error_queue.put(expected_error)
 
     def side_effect(*args, **kwargs):
         assert is_queue_eventually_not_empty(error_queue) is True
-        teardown_event.set()
+        return True
 
     mocker.patch.object(
-        p, "_teardown_after_loop", autospec=True, side_effect=side_effect
+        p, "is_teardown_complete", autospec=True, side_effect=side_effect
     )
-    error_queue.put(expected_error)
 
     actual = p.hard_stop()
     assert actual["fatal_error_reporter"] == [expected_error]
-
     assert is_queue_eventually_empty(error_queue) is True
 
 
@@ -213,20 +211,17 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
 
     p = simple_infinite_looper()
     error_queue = p.get_fatal_error_reporter()
-    teardown_event = p._teardown_complete_event  # pylint:disable=protected-access
+    error_queue.put(expected_error)
 
     def side_effect(*args, **kwargs):
         assert is_queue_eventually_not_empty(error_queue) is True
-        teardown_event.set()
+        return True
 
     mocker.patch.object(
-        p, "_teardown_after_loop", autospec=True, side_effect=side_effect
+        p, "is_teardown_complete", autospec=True, side_effect=side_effect
     )
-    error_queue.put(expected_error)
 
     actual = p.hard_stop()
-    assert p.is_teardown_complete() is True
-
     assert actual["fatal_error_reporter"] == [expected_error]
     assert error_queue.empty() is True
 

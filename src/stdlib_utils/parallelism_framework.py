@@ -76,6 +76,12 @@ class InfiniteLoopingParallelismMixIn:
     def get_start_timepoint_of_performance_measurement(self) -> int:
         return self._start_timepoint_of_last_performance_measurement
 
+    def get_elapsed_time_since_last_performance_measurement(self) -> int:
+        return (
+            time.perf_counter_ns()
+            - self._start_timepoint_of_last_performance_measurement
+        )
+
     def reset_performance_tracker(self) -> Dict[str, Any]:
         """Reset performance tracking and return various metrics."""
         out_dict: Dict[str, Any] = {}
@@ -86,10 +92,7 @@ class InfiniteLoopingParallelismMixIn:
         out_dict["percent_use"] = 100 * (
             1
             - self._idle_iteration_time_ns
-            / (
-                time.perf_counter_ns()
-                - self._start_timepoint_of_last_performance_measurement
-            )
+            / self.get_elapsed_time_since_last_performance_measurement()
         )
         self._percent_use_values.append(out_dict["percent_use"])
         self._reset_performance_measurements()
@@ -108,6 +111,9 @@ class InfiniteLoopingParallelismMixIn:
             ),
         }
         return metrics
+
+    def get_idle_time_ns(self) -> float:
+        return self._idle_iteration_time_ns
 
     def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
         return self._minimum_iteration_duration_seconds
@@ -279,7 +285,7 @@ class InfiniteLoopingParallelismMixIn:
                 elapsed_time = time.perf_counter() - start_timepoint
                 if elapsed_time > timeout:
                     break
-            if self._teardown_complete_event.is_set():
+            if self.is_teardown_complete():
                 break
 
         item_dict = self._drain_all_queues()
