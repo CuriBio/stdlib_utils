@@ -12,13 +12,6 @@ from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import SimpleMultiprocessingQueue
 
 
-@pytest.fixture(scope="function", name="patch_init_performance_metrics")
-def fixture_patch_init_performance_metrics(mocker):
-    mocker.patch.object(
-        InfiniteLoopingParallelismMixIn, "_init_performance_measurements", autospec=True
-    )
-
-
 def generic_infinite_looper():
     p = InfiniteLoopingParallelismMixIn(
         queue.Queue(),
@@ -46,14 +39,14 @@ def simple_infinite_looper():
 
 
 def test_InfiniteLoopingParallelismMixIn__sleeps_during_loop_for_time_remaining_if_minimum_iteration_duration_not_met(
-    mocker, patch_init_performance_metrics
+    mocker,
 ):
     mocked_length_of_time_to_execute_ns = 10 ** 6
     mocker.patch.object(
         time,
         "perf_counter_ns",
         autospec=True,
-        side_effect=[0, mocked_length_of_time_to_execute_ns, 0],
+        side_effect=[0, 0, mocked_length_of_time_to_execute_ns, 0],
     )
     mocked_sleep = mocker.patch.object(time, "sleep", autospec=True)
     generic_infinite_looper().run(num_iterations=2, perform_setup_before_loop=False)
@@ -64,11 +57,11 @@ def test_InfiniteLoopingParallelismMixIn__sleeps_during_loop_for_time_remaining_
 
 
 def test_InfiniteLoopingParallelismMixIn__does_not_sleep_during_loop_if_minimum_iteration_duration_already_met(
-    mocker, patch_init_performance_metrics
+    mocker,
 ):
 
     mocker.patch.object(
-        time, "perf_counter_ns", autospec=True, side_effect=[0, 0.1 * 10 ** 9, 0],
+        time, "perf_counter_ns", autospec=True, side_effect=[0, 0, 0.1 * 10 ** 9, 0],
     )
     mocked_sleep = mocker.patch.object(time, "sleep", autospec=True)
     generic_infinite_looper().run(num_iterations=2, perform_setup_before_loop=False)
@@ -136,7 +129,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     p = generic_infinite_looper()
     percent_use_values = p.get_percent_use_values()
 
-    mocked_perf_counter = mocker.spy(
+    mocked_elapsed_time = mocker.spy(
         p, "get_elapsed_time_since_last_performance_measurement"
     )
 
@@ -144,7 +137,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     idle_time_secs = p.get_idle_time_ns()
     actual_first_return = p.reset_performance_tracker()
     expected_percent_use_1 = 100 * (
-        1 - idle_time_secs / mocked_perf_counter.return_value
+        1 - idle_time_secs / mocked_elapsed_time.return_value
     )
     assert actual_first_return["percent_use"] == expected_percent_use_1
     assert percent_use_values[0] == expected_percent_use_1
@@ -153,7 +146,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     idle_time_secs = p.get_idle_time_ns()
     actual_second_return = p.reset_performance_tracker()
     expected_percent_use_2 = 100 * (
-        1 - idle_time_secs / mocked_perf_counter.return_value
+        1 - idle_time_secs / mocked_elapsed_time.return_value
     )
     assert actual_second_return["percent_use"] == expected_percent_use_2
     assert percent_use_values[1] == expected_percent_use_2
@@ -217,13 +210,15 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__waits_for_teardown_complete
         assert is_queue_eventually_not_empty(error_queue) is True
         return True
 
-    mocker.patch.object(
+    mocked_complete = mocker.patch.object(
         p, "is_teardown_complete", autospec=True, side_effect=side_effect
     )
 
     actual = p.hard_stop()
     assert actual["fatal_error_reporter"] == [expected_error]
     assert error_queue.empty() is True
+
+    mocked_complete.assert_called_once()
 
 
 @pytest.mark.timeout(1)
@@ -237,17 +232,18 @@ def test_InfiniteLoopingParallelismMixIn__hard_stop__timeout_overrides_waiting_f
 
     def side_effect(*args, **kwargs):
         assert is_queue_eventually_not_empty(error_queue) is True
+        return False
 
-    mocker.patch.object(
-        p, "_teardown_after_loop", autospec=True, side_effect=side_effect
+    mocked_complete = mocker.patch.object(
+        p, "is_teardown_complete", autospec=True, side_effect=side_effect
     )
     error_queue.put(expected_error)
 
     actual = p.hard_stop(timeout=0.2)
-    assert p.is_teardown_complete() is False
-
     assert actual["fatal_error_reporter"] == [expected_error]
     assert error_queue.empty() is True
+
+    mocked_complete.assert_called()
 
 
 @pytest.mark.parametrize(
