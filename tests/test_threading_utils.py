@@ -87,7 +87,7 @@ def test_InfiniteThread__run_can_be_executed_just_four_cycles(mocker):
     assert spied_is_stopped.call_count == 4
 
 
-def test_InfiniteThread_run_calls___commands_for_each_run_iteration(mocker):
+def test_InfiniteThread_run__calls_commands_for_each_run_iteration(mocker):
     error_queue = queue.Queue()
     t = InfiniteThread(error_queue)
     spied_commands_for_each_run_iteration = mocker.spy(
@@ -103,11 +103,8 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_
 ):
     expected_error = ValueError("test message")
     error_queue = queue.Queue()
-    t = InfiniteThread(error_queue)
+    t = InfiniteThreadThatRaisesError(error_queue)
 
-    mocker.patch.object(
-        t, "_commands_for_each_run_iteration", autospec=True, side_effect=expected_error
-    )
     spied_stop = mocker.spy(t, "stop")
     mocker.patch(
         "builtins.print", autospec=True

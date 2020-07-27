@@ -15,14 +15,24 @@ init_test_args_InfiniteLoopingParallelismMixIn = [
 ]
 
 
-class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):
-    def _commands_for_each_run_iteration(self):
-        self._process_can_be_soft_stopped = False
-
-
 class InfiniteProcessThatRaisesError(InfiniteProcess):
     def _commands_for_each_run_iteration(self):
         raise ValueError("test message")
+
+
+class InfiniteProcessThatRaisesErrorInSetup(InfiniteProcess):
+    def _setup_before_loop(self):
+        raise ValueError("error during setup")
+
+
+class InfiniteProcessThatRaisesErrorInTeardown(InfiniteProcess):
+    def _teardown_after_loop(self):
+        raise ValueError("error during teardown")
+
+
+class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):
+    def _commands_for_each_run_iteration(self):
+        self._process_can_be_soft_stopped = False
 
 
 class InfiniteThreadThatRaisesError(InfiniteThread):
