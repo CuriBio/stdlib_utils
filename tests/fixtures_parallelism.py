@@ -20,11 +20,6 @@ class InfiniteProcessThatRaisesError(InfiniteProcess):
         raise ValueError("test message")
 
 
-class InfiniteProcessThatRaisesErrorInSetup(InfiniteProcess):
-    def _setup_before_loop(self):
-        raise ValueError("error during setup")
-
-
 class InfiniteProcessThatRaisesErrorInTeardown(InfiniteProcess):
     def _teardown_after_loop(self):
         raise ValueError("error during teardown")
@@ -35,6 +30,35 @@ class InfiniteProcessThatCannotBeSoftStopped(InfiniteProcess):
         self._process_can_be_soft_stopped = False
 
 
+class InfiniteProcessThatCountsIterations(InfiniteProcess):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._num_iterations: int = 0
+
+    def _commands_for_each_run_iteration(self):
+        self._num_iterations += 1
+
+    def get_num_iterations(self) -> int:
+        return self._num_iterations
+
+
+class InfiniteProcessThatTracksSetup(InfiniteProcessThatCountsIterations):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_setup: bool = False
+
+    def _setup_before_loop(self):
+        self._is_setup = True
+
+    def is_setup(self) -> bool:
+        return self._is_setup
+
+
+class InfiniteProcessThatRaisesErrorInSetup(InfiniteProcessThatCountsIterations):
+    def _setup_before_loop(self):
+        raise ValueError("error during setup")
+
+
 class InfiniteThreadThatRaisesError(InfiniteThread):
     def _commands_for_each_run_iteration(self):
         raise ValueError("test message")
@@ -43,3 +67,27 @@ class InfiniteThreadThatRaisesError(InfiniteThread):
 class InfiniteThreadThatCannotBeSoftStopped(InfiniteThread):
     def _commands_for_each_run_iteration(self):
         self._process_can_be_soft_stopped = False
+
+
+class InfiniteThreadThatCountsIterations(InfiniteThread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._num_iterations: int = 0
+
+    def _commands_for_each_run_iteration(self):
+        self._num_iterations += 1
+
+    def get_num_iterations(self) -> int:
+        return self._num_iterations
+
+
+class InfiniteThreadThatTracksSetup(InfiniteThreadThatCountsIterations):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_setup: bool = False
+
+    def _setup_before_loop(self):
+        self._is_setup = True
+
+    def is_setup(self) -> bool:
+        return self._is_setup

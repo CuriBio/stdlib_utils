@@ -9,7 +9,9 @@ from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteThread
 
 from .fixtures_parallelism import InfiniteThreadThatCannotBeSoftStopped
+from .fixtures_parallelism import InfiniteThreadThatCountsIterations
 from .fixtures_parallelism import InfiniteThreadThatRaisesError
+from .fixtures_parallelism import InfiniteThreadThatTracksSetup
 from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 
@@ -89,13 +91,10 @@ def test_InfiniteThread__run_can_be_executed_just_four_cycles(mocker):
 
 def test_InfiniteThread_run__calls_commands_for_each_run_iteration(mocker):
     error_queue = queue.Queue()
-    t = InfiniteThread(error_queue)
-    spied_commands_for_each_run_iteration = mocker.spy(
-        t, "_commands_for_each_run_iteration"
-    )
+    t = InfiniteThreadThatCountsIterations(error_queue)
     mocker.patch.object(t, "is_stopped", autospec=True, return_value=True)
     t.run()
-    assert spied_commands_for_each_run_iteration.call_count == 1
+    assert t.get_num_iterations() == 1
 
 
 def test_InfiniteThread__queue_is_populated_with_error_occuring_during_run__and_stop_is_called(
@@ -140,11 +139,10 @@ def test_InfiniteThread__queue_is_populated_with_error_occuring_during_live_spaw
 
 def test_InfiniteThread__calls_setup_before_loop(mocker):
     error_queue = queue.Queue()
-    t = InfiniteThread(error_queue)
-    spied_setup = mocker.spy(t, "_setup_before_loop")
+    t = InfiniteThreadThatTracksSetup(error_queue)
     t.run(num_iterations=1)
     assert error_queue.empty() is True
-    assert spied_setup.call_count == 1
+    assert t.is_setup() is True
 
 
 def test_InfiniteThread__calls_teardown_after_loop(mocker):
