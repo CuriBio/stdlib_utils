@@ -76,6 +76,12 @@ class InfiniteLoopingParallelismMixIn:
     def get_start_timepoint_of_performance_measurement(self) -> int:
         return self._start_timepoint_of_last_performance_measurement
 
+    def get_elapsed_time_since_last_performance_measurement(self) -> int:
+        return (
+            time.perf_counter_ns()
+            - self._start_timepoint_of_last_performance_measurement
+        )
+
     def reset_performance_tracker(self) -> Dict[str, Any]:
         """Reset performance tracking and return various metrics."""
         out_dict: Dict[str, Any] = {}
@@ -86,14 +92,14 @@ class InfiniteLoopingParallelismMixIn:
         out_dict["percent_use"] = 100 * (
             1
             - self._idle_iteration_time_ns
-            / (
-                time.perf_counter_ns()
-                - self._start_timepoint_of_last_performance_measurement
-            )
+            / self.get_elapsed_time_since_last_performance_measurement()
         )
         self._percent_use_values.append(out_dict["percent_use"])
         self._reset_performance_measurements()
         return out_dict
+
+    def get_percent_use_values(self) -> List[float]:
+        return self._percent_use_values
 
     def get_percent_use_metrics(self) -> Dict[str, float]:
         metrics = {
@@ -105,6 +111,9 @@ class InfiniteLoopingParallelismMixIn:
             ),
         }
         return metrics
+
+    def get_idle_time_ns(self) -> float:
+        return self._idle_iteration_time_ns
 
     def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
         return self._minimum_iteration_duration_seconds
@@ -276,7 +285,7 @@ class InfiniteLoopingParallelismMixIn:
                 elapsed_time = time.perf_counter() - start_timepoint
                 if elapsed_time > timeout:
                     break
-            if self._teardown_complete_event.is_set():
+            if self.is_teardown_complete():
                 break
 
         item_dict = self._drain_all_queues()
@@ -347,3 +356,19 @@ class InfiniteLoopingParallelismMixIn:
                 "Classes using this mixin must have a _soft_stop_event as either a threading.Event or multiprocessing.Event"
             )
         return soft_stop_event.is_set()
+
+    def is_teardown_complete(self) -> bool:
+        """Check if the parallel instance has completed tearing itself down."""
+        if not hasattr(self, "_teardown_complete_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _teardown_complete_event attribute."
+            )
+        teardown_complete_event = getattr(self, "_teardown_complete_event")
+        if not isinstance(
+            teardown_complete_event,
+            (threading.Event, multiprocessing.synchronize.Event),
+        ):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _teardown_complete_event as either a threading.Event or multiprocessing.Event"
+            )
+        return teardown_complete_event.is_set()

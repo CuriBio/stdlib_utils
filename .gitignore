@@ -42,5 +42,7 @@ pipeline_outputs/
 *.tsv
 *.csv
 
+# logs
+logs/
 
 secrets.json

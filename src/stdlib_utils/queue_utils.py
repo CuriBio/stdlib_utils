@@ -13,10 +13,8 @@ from queue import Empty
 from queue import Queue
 import time
 from typing import Any
-from typing import Dict
+from typing import List
 from typing import Union
-
-from .exceptions import LogMessageNotFoundError
 
 
 def _eventually_empty(
@@ -77,36 +75,15 @@ def safe_get(the_queue: Queue[Any]) -> Any:  # pylint: disable=unsubscriptable-o
         return None
 
 
-def find_log_message_in_queue(
-    the_queue: multiprocessing.queues.Queue[
-        Dict[str, Any]
-    ],  # pylint: disable=unsubscriptable-object
-    expected_message: Union[str, Dict[Any, Any]],
-) -> Union[str, Dict[Any, Any]]:
-    """Find a similar log message in the given queue and return it.
-
-    This allows for flexibility in testing so that a similar but not exact match can be provided
-
-    This should only be used to find items put into queues using put_log_message_into_queue.
-    """
-    log_message: Union[str, Dict[Any, Any], None] = None
-    while is_queue_eventually_not_empty(the_queue):
-        item = the_queue.get_nowait()
-        item_message = item["message"]
-        if isinstance(expected_message, str):
-            if isinstance(item_message, str):
-                log_message = item_message if expected_message in item_message else None
-        elif isinstance(item_message, dict):
-            log_message = (
-                item_message
-                if all(key in item_message.keys() for key in expected_message.keys())
-                else None
-            )
-        if log_message is not None:
-            return log_message
-    raise LogMessageNotFoundError(
-        f"Log Message: '{expected_message}' not found in queue"
-    )
+def drain_queue(
+    the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
+) -> List[Any]:
+    items = list()
+    while not the_queue.empty():
+        item = safe_get(the_queue)
+        if item is not None:
+            items.append(item)
+    return items
 
 
 class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why SimpleQueue doesn't have type arguments defined in the stdlib(?)

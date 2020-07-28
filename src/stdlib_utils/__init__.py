@@ -7,7 +7,6 @@ from . import ports
 from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import LogFolderDoesNotExistError
 from .exceptions import LogFolderGivenWithoutFilePrefixError
-from .exceptions import LogMessageNotFoundError
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
@@ -30,7 +29,7 @@ from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
-from .queue_utils import find_log_message_in_queue
+from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import safe_get
@@ -72,8 +71,7 @@ __all__ = [
     "get_current_file_abs_path",
     "parallelism_utils",
     "safe_get",
-    "find_log_message_in_queue",
-    "LogMessageNotFoundError",
+    "drain_queue",
     "LogFolderGivenWithoutFilePrefixError",
     "LogFolderDoesNotExistError",
 ]

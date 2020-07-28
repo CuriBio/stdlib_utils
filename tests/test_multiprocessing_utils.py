@@ -10,7 +10,11 @@ from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
+from .fixtures_parallelism import InfiniteProcessThatCountsIterations
 from .fixtures_parallelism import InfiniteProcessThatRaisesError
+from .fixtures_parallelism import InfiniteProcessThatRaisesErrorInSetup
+from .fixtures_parallelism import InfiniteProcessThatRaisesErrorInTeardown
+from .fixtures_parallelism import InfiniteProcessThatTracksSetup
 from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 
 # adapted from https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
@@ -111,13 +115,10 @@ def test_InfiniteProcess__run_can_be_executed_just_four_cycles(mocker):
 
 def test_InfiniteProcess_run_calls___commands_for_each_run_iteration(mocker):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_commands_for_each_run_iteration = mocker.spy(
-        p, "_commands_for_each_run_iteration"
-    )
+    p = InfiniteProcessThatCountsIterations(error_queue)
     mocker.patch.object(p, "is_stopped", autospec=True, return_value=True)
     p.run()
-    assert spied_commands_for_each_run_iteration.call_count == 1
+    assert p.get_num_iterations() == 1
 
 
 def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_run__and_stop_is_called(
@@ -125,13 +126,10 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_run__and
 ):
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
+    p = InfiniteProcessThatRaisesError(error_queue)
     mocker.patch(
         "builtins.print", autospec=True
     )  # don't print the error message to stdout
-    mocker.patch.object(
-        p, "_commands_for_each_run_iteration", autospec=True, side_effect=expected_error
-    )
     spied_stop = mocker.spy(p, "stop")
 
     p.run()
@@ -179,11 +177,10 @@ def test_InfiniteProcess__error_queue_is_populated_when_error_queue_is_multiproc
 
 def test_InfiniteProcess__calls_setup_before_loop(mocker):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_setup = mocker.spy(p, "_setup_before_loop")
+    p = InfiniteProcessThatTracksSetup(error_queue)
     p.run(num_iterations=1)
     assert error_queue.empty() is True
-    assert spied_setup.call_count == 1
+    assert p.is_setup() is True
 
 
 def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_iteration_or_teardown(
@@ -191,21 +188,15 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
 ):
     expected_error = ValueError("error during setup")
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
-    spied_teardown = mocker.spy(p, "_teardown_after_loop")
-    mocked_setup = mocker.patch.object(
-        p, "_setup_before_loop", autospec=True, side_effect=expected_error
-    )
+    p = InfiniteProcessThatRaisesErrorInSetup(error_queue)
     mocker.patch(
         "builtins.print", autospec=True
     )  # don't print the error message to stdout
     p.run(num_iterations=1)
     assert error_queue.empty() is False
     actual_error, _ = error_queue.get_nowait()
-    assert mocked_setup.call_count == 1
-    assert spied_run.call_count == 0
-    assert spied_teardown.call_count == 0
+    assert p.get_num_iterations() == 0
+    assert p.is_teardown_complete() is False
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
 
@@ -213,24 +204,19 @@ def test_InfiniteProcess__catches_error_in_setup_before_loop_and_does_not_run_it
 def test_InfiniteProcess__calls_teardown_after_loop(mocker):
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)
-    spied_teardown = mocker.spy(p, "_teardown_after_loop")
     p.run(num_iterations=1)
     assert error_queue.empty() is True
-    assert spied_teardown.call_count == 1
+    assert p.is_teardown_complete() is True
 
 
-def test_InfiniteProcess__catches_error_in_teardown_after(mocker):
+def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
     expected_error = ValueError("error during teardown")
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
+    p = InfiniteProcessThatRaisesErrorInTeardown(error_queue)
     mocker.patch(
         "builtins.print", autospec=True
     )  # don't print the error message to stdout
-    mocked_teardown = mocker.patch.object(
-        p, "_teardown_after_loop", autospec=True, side_effect=expected_error
-    )
     p.run(num_iterations=1)
-    assert mocked_teardown.call_count == 1
     assert error_queue.empty() is False
     actual_error, _ = error_queue.get_nowait()
     assert isinstance(actual_error, type(expected_error))

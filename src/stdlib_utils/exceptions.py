@@ -39,10 +39,6 @@ class NoMatchingXmlElementError(Exception):
         )
 
 
-class LogMessageNotFoundError(Exception):
-    pass
-
-
 class LogFolderDoesNotExistError(Exception):
     pass
 
