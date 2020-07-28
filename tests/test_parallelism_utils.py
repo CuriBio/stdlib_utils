@@ -5,12 +5,12 @@ import queue
 import time
 
 import pytest
-from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import parallelism_utils
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
 
+from .fixtures_parallelism import InfiniteProcessThatCountsIterations
 from .fixtures_parallelism import InfiniteProcessThatRaisesError
 from .fixtures_parallelism import InfiniteProcessThatTracksSetup
 from .fixtures_parallelism import InfiniteThreadThatRaisesError
@@ -18,13 +18,12 @@ from .fixtures_parallelism import InfiniteThreadThatRaisesError
 
 def test_invoke_process_run_and_check_errors__passes_values_for_InfiniteProcess(mocker):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_run = mocker.spy(p, "run")
+    p = InfiniteProcessThatCountsIterations(error_queue)
     invoke_process_run_and_check_errors(p)  # runs once by default
-    assert spied_run.call_args[1]["num_iterations"] == 1
+    assert p.get_num_iterations() == 1
 
     invoke_process_run_and_check_errors(p, num_iterations=2)
-    assert spied_run.call_args[1]["num_iterations"] == 2
+    assert p.get_num_iterations() == 3
 
 
 def test_invoke_process_run_and_check_errors__pauses_long_enough_to_process_standard_multiprocessing_queue(
