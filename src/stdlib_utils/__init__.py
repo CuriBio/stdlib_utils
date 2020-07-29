@@ -24,6 +24,7 @@ from .misc import is_system_windows
 from .misc import print_exception
 from .misc import raise_alarm_signal
 from .misc import resource_path
+from .misc import write_crc32_to_file_head
 from .multiprocessing_utils import InfiniteProcess
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .parallelism_utils import invoke_process_run_and_check_errors
@@ -78,4 +79,5 @@ __all__ = [
     "LogFolderDoesNotExistError",
     "calculate_crc32_bytes_of_large_file",
     "calculate_crc32_hex_of_large_file",
+    "write_crc32_to_file_head",
 ]

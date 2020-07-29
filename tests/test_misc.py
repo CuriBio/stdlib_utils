@@ -3,6 +3,7 @@ import ctypes
 import functools
 import inspect
 import os
+import shutil
 import signal
 import struct
 import tempfile
@@ -21,6 +22,7 @@ from stdlib_utils import misc
 from stdlib_utils import print_exception
 from stdlib_utils import raise_alarm_signal
 from stdlib_utils import resource_path
+from stdlib_utils import write_crc32_to_file_head
 
 PATH_OF_CURRENT_FILE = os.path.dirname((inspect.stack()[0][1]))
 
@@ -188,31 +190,45 @@ def test_get_current_file_abs_directory():
     assert len(actual) > minimum_length
 
 
+FILE_FOR_HASHING = os.path.join(
+    get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
+)
+
+
 def test_calculate_crc32_bytes_of_large_file__returns_correct_hash():
-    # print(bytes.fromhex("aad1c7b5"))
-    file_path = os.path.join(
-        get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
-    )
+
     expected = b"\xaa\xd1\xc7\xb5"  # from https://emn178.github.io/online-tools/crc32_checksum.html
     actual: bytes
-    with open(file_path, "rb") as in_file:
+    with open(FILE_FOR_HASHING, "rb") as in_file:
         actual = calculate_crc32_bytes_of_large_file(in_file)
     assert actual == expected
 
 
-def test_calculate_crc32_hex_of_large_file__returns_correct_hash():
+def test_calculate_crc32_bytes_of_large_file__can_skip_initial_bytes():
+    expected = b"\xcf\x05\xc7s"
+    actual: bytes
+    with open(FILE_FOR_HASHING, "rb") as in_file:
+        actual = calculate_crc32_bytes_of_large_file(in_file, skip_first_n_bytes=4)
+    assert actual == expected
 
-    file_path = os.path.join(
-        get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
-    )
+
+def test_calculate_crc32_hex_of_large_file__returns_correct_hash():
     expected = "aad1c7b5"
     actual: str
-    with open(file_path, "rb") as in_file:
+    with open(FILE_FOR_HASHING, "rb") as in_file:
         actual = calculate_crc32_hex_of_large_file(in_file)
     assert actual == expected
 
 
-def test_test_calculate_crc32_hex_of_large_file__zero_pads_left_side(mocker):
+def test_calculate_crc32_hex_of_large_file__can_skip_initial_bytes():
+    expected = "cf05c773"
+    actual: str
+    with open(FILE_FOR_HASHING, "rb") as in_file:
+        actual = calculate_crc32_hex_of_large_file(in_file, skip_first_n_bytes=4)
+    assert actual == expected
+
+
+def test_calculate_crc32_hex_of_large_file__zero_pads_left_side(mocker):
     mocker.patch.object(
         misc,
         "calculate_crc32_bytes_of_large_file",
@@ -222,3 +238,15 @@ def test_test_calculate_crc32_hex_of_large_file__zero_pads_left_side(mocker):
     actual = calculate_crc32_hex_of_large_file(None)
 
     assert actual == "00000016"
+
+
+def test_write_crc32_to_file_head():
+    expected_checksum_bytes = b"\xcf\x05\xc7s"
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        new_file = os.path.join(tmp_dir, "new_file.h5")
+        shutil.copyfile(FILE_FOR_HASHING, new_file)
+        with open(new_file, "rb+") as the_file:
+            write_crc32_to_file_head(the_file)
+        with open(new_file, "rb") as in_file:
+            actual = in_file.read(4)
+            assert actual == expected_checksum_bytes
