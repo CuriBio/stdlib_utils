@@ -4,67 +4,13 @@ import ctypes
 import inspect
 import os
 import signal
-import struct
 import sys
 import traceback
-from typing import IO
 from typing import Optional
 from typing import Union
 from uuid import UUID
-from zlib import crc32
 
 from .exceptions import BlankAbsoluteResourcePathError
-
-
-def calculate_crc32_bytes_of_large_file(
-    file_handle: IO[bytes], skip_first_n_bytes: int = 0
-) -> bytes:
-    """Calculate the CRC32 checksum in a memory-efficient manner.
-
-    Modified from: https://stackoverflow.com/questions/1742866/compute-crc-of-file-in-python
-
-    Args:
-        file_handle: the file handle to process. Should be opened in 'rb' mode
-        skip_first_n_bytes: For cases when a checksum has been written in as the first bytes of a file (e.g. in an H5 userblock), the calculation can skip those bytes
-
-    Returns:
-        The CRC32 checksum as bytes
-    """
-    checksum = 0
-    if skip_first_n_bytes > 0:
-        file_handle.read(skip_first_n_bytes)
-    while True:
-        itered_bytes = file_handle.read(65536)
-        if not itered_bytes:
-            break
-        checksum = crc32(itered_bytes, checksum)
-    return struct.pack(">I", checksum)
-
-
-def calculate_crc32_hex_of_large_file(
-    file_handle: IO[bytes], skip_first_n_bytes: int = 0
-) -> str:
-    """Calcuates the lowercase zero-padded hex string of a file."""
-    checksum_bytes = calculate_crc32_bytes_of_large_file(
-        file_handle, skip_first_n_bytes=skip_first_n_bytes
-    )
-    checksum_int = struct.unpack(">I", checksum_bytes)[0]
-    return ("%08X" % (checksum_int & 0xFFFFFFFF)).lower()
-
-
-def write_crc32_to_file_head(file_handle: IO[bytes]) -> None:
-    """Write a CRC32 checksum over the first 4 bytes of the file.
-
-    This is often used to facilitate encoding a CRC32 checksum in the Userblock of an H5 file.
-
-    Args:
-        file_handle: the file should be opened in 'rb+' mode
-    """
-    checksum_bytes = calculate_crc32_bytes_of_large_file(
-        file_handle, skip_first_n_bytes=4
-    )
-    file_handle.seek(0)
-    file_handle.write(checksum_bytes)
 
 
 def get_current_file_abs_path() -> str:
