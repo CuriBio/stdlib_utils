@@ -5,10 +5,10 @@ from . import loggers
 from . import misc
 from . import parallelism_utils
 from . import ports
-from .checksum import calculate_crc32_bytes_of_large_file
-from .checksum import calculate_crc32_hex_of_large_file
+from .checksum import compute_crc32_and_write_to_file_head
+from .checksum import compute_crc32_bytes_of_large_file
+from .checksum import compute_crc32_hex_of_large_file
 from .checksum import validate_file_head_crc32
-from .checksum import write_crc32_to_file_head
 from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import Crc32ChecksumValidationFailureError
 from .exceptions import Crc32InFileHeadDoesNotMatchExpectedValueError
@@ -82,9 +82,9 @@ __all__ = [
     "drain_queue",
     "LogFolderGivenWithoutFilePrefixError",
     "LogFolderDoesNotExistError",
-    "calculate_crc32_bytes_of_large_file",
-    "calculate_crc32_hex_of_large_file",
-    "write_crc32_to_file_head",
+    "compute_crc32_bytes_of_large_file",
+    "compute_crc32_hex_of_large_file",
+    "compute_crc32_and_write_to_file_head",
     "validate_file_head_crc32",
     "Crc32InFileHeadDoesNotMatchExpectedValueError",
     "Crc32ChecksumValidationFailureError",

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Misc helper utilities."""
+"""Functions for calculating, embedding, and validating checksums."""
 import struct
 from typing import IO
 from typing import Optional
@@ -14,7 +14,7 @@ def _convert_crc32_bytes_to_hex(checksum_bytes: bytes) -> str:
     return ("%08X" % (checksum_int & 0xFFFFFFFF)).lower()
 
 
-def calculate_crc32_bytes_of_large_file(
+def compute_crc32_bytes_of_large_file(
     file_handle: IO[bytes], skip_first_n_bytes: int = 0
 ) -> bytes:
     """Calculate the CRC32 checksum in a memory-efficient manner.
@@ -39,25 +39,27 @@ def calculate_crc32_bytes_of_large_file(
     return struct.pack(">I", checksum)
 
 
-def calculate_crc32_hex_of_large_file(
+def compute_crc32_hex_of_large_file(
     file_handle: IO[bytes], skip_first_n_bytes: int = 0
 ) -> str:
     """Calcuates the lowercase zero-padded hex string of a file."""
-    checksum_bytes = calculate_crc32_bytes_of_large_file(
+    checksum_bytes = compute_crc32_bytes_of_large_file(
         file_handle, skip_first_n_bytes=skip_first_n_bytes
     )
     return _convert_crc32_bytes_to_hex(checksum_bytes)
 
 
-def write_crc32_to_file_head(file_handle: IO[bytes]) -> None:
-    """Write a CRC32 checksum over the first 4 bytes of the file.
+def compute_crc32_and_write_to_file_head(  # pylint: disable=invalid-name # Eli (7/29/20): it's one character over the limit, but I can't think of a shorter way to describe it
+    file_handle: IO[bytes],
+) -> None:
+    """Write the calculated CRC32 checksum over the first 4 bytes of the file.
 
     This is often used to facilitate encoding a CRC32 checksum in the Userblock of an H5 file.
 
     Args:
         file_handle: the file should be opened in 'rb+' mode
     """
-    checksum_bytes = calculate_crc32_bytes_of_large_file(
+    checksum_bytes = compute_crc32_bytes_of_large_file(
         file_handle, skip_first_n_bytes=4
     )
     file_handle.seek(0)
@@ -85,7 +87,7 @@ def validate_file_head_crc32(
                 f"The expected checksum passed in to the function was {expected_checksum}, but the checksum found at the file head is {checksum_hex_in_file_head}."
             )
 
-    actual_checksum_bytes = calculate_crc32_bytes_of_large_file(file_handle)
+    actual_checksum_bytes = compute_crc32_bytes_of_large_file(file_handle)
     if actual_checksum_bytes != checksum_bytes_in_file_head:
         actual_checksum_hex = _convert_crc32_bytes_to_hex(actual_checksum_bytes)
         raise Crc32ChecksumValidationFailureError(
