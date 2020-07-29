@@ -45,3 +45,11 @@ class LogFolderDoesNotExistError(Exception):
 
 class LogFolderGivenWithoutFilePrefixError(Exception):
     pass
+
+
+class Crc32InFileHeadDoesNotMatchExpectedValueError(Exception):
+    pass
+
+
+class Crc32ChecksumValidationFailureError(Exception):
+    pass
