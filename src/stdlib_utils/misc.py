@@ -4,13 +4,32 @@ import ctypes
 import inspect
 import os
 import signal
+import struct
 import sys
 import traceback
+from typing import IO
 from typing import Optional
 from typing import Union
 from uuid import UUID
+from zlib import crc32
 
 from .exceptions import BlankAbsoluteResourcePathError
+
+
+def calculate_crc32_bytes_of_large_file(file_handle: IO[bytes]) -> bytes:
+    checksum = 0
+    while True:
+        itered_bytes = file_handle.read(65536)
+        if not itered_bytes:
+            break
+        checksum = crc32(itered_bytes, checksum)
+    return struct.pack(">I", checksum)
+
+
+def calculate_crc32_hex_of_large_file(file_handle: IO[bytes]) -> str:
+    hash_bytes = calculate_crc32_bytes_of_large_file(file_handle)
+    hash_int = struct.unpack(">I", hash_bytes)[0]
+    return ("%08X" % (hash_int & 0xFFFFFFFF)).lower()
 
 
 def get_current_file_abs_path() -> str:

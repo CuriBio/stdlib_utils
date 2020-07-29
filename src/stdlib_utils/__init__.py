@@ -12,6 +12,8 @@ from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
 from .loggers import configure_logging
+from .misc import calculate_crc32_bytes_of_large_file
+from .misc import calculate_crc32_hex_of_large_file
 from .misc import create_directory_if_not_exists
 from .misc import get_current_file_abs_directory
 from .misc import get_current_file_abs_path
@@ -74,4 +76,6 @@ __all__ = [
     "drain_queue",
     "LogFolderGivenWithoutFilePrefixError",
     "LogFolderDoesNotExistError",
+    "calculate_crc32_bytes_of_large_file",
+    "calculate_crc32_hex_of_large_file",
 ]

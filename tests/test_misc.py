@@ -4,11 +4,14 @@ import functools
 import inspect
 import os
 import signal
+import struct
 import tempfile
 import time
 
 import pytest
 from stdlib_utils import BlankAbsoluteResourcePathError
+from stdlib_utils import calculate_crc32_bytes_of_large_file
+from stdlib_utils import calculate_crc32_hex_of_large_file
 from stdlib_utils import create_directory_if_not_exists
 from stdlib_utils import get_current_file_abs_directory
 from stdlib_utils import get_current_file_abs_path
@@ -183,3 +186,39 @@ def test_get_current_file_abs_directory():
     # the actual beginning of the absolute path could vary system to system...so just make sure there is something in front of the known portion of the path
     minimum_length = len(expected_to_contain) + 1
     assert len(actual) > minimum_length
+
+
+def test_calculate_crc32_bytes_of_large_file__returns_correct_hash():
+    # print(bytes.fromhex("aad1c7b5"))
+    file_path = os.path.join(
+        get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
+    )
+    expected = b"\xaa\xd1\xc7\xb5"  # from https://emn178.github.io/online-tools/crc32_checksum.html
+    actual: bytes
+    with open(file_path, "rb") as in_file:
+        actual = calculate_crc32_bytes_of_large_file(in_file)
+    assert actual == expected
+
+
+def test_calculate_crc32_hex_of_large_file__returns_correct_hash():
+
+    file_path = os.path.join(
+        get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
+    )
+    expected = "aad1c7b5"
+    actual: str
+    with open(file_path, "rb") as in_file:
+        actual = calculate_crc32_hex_of_large_file(in_file)
+    assert actual == expected
+
+
+def test_test_calculate_crc32_hex_of_large_file__zero_pads_left_side(mocker):
+    mocker.patch.object(
+        misc,
+        "calculate_crc32_bytes_of_large_file",
+        autospec=True,
+        return_value=struct.pack(">I", 22),
+    )
+    actual = calculate_crc32_hex_of_large_file(None)
+
+    assert actual == "00000016"
