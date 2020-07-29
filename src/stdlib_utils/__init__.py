@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 """Helper utilities only requiring the standard library."""
+from . import checksum
 from . import loggers
 from . import misc
 from . import parallelism_utils
 from . import ports
+from .checksum import compute_crc32_and_write_to_file_head
+from .checksum import compute_crc32_bytes_of_large_file
+from .checksum import compute_crc32_hex_of_large_file
+from .checksum import validate_file_head_crc32
 from .exceptions import BlankAbsoluteResourcePathError
+from .exceptions import Crc32ChecksumValidationFailureError
+from .exceptions import Crc32InFileHeadDoesNotMatchExpectedValueError
 from .exceptions import LogFolderDoesNotExistError
 from .exceptions import LogFolderGivenWithoutFilePrefixError
-from .exceptions import LogMessageNotFoundError
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
@@ -30,7 +36,7 @@ from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
-from .queue_utils import find_log_message_in_queue
+from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import safe_get
@@ -48,6 +54,7 @@ __all__ = [
     "create_directory_if_not_exists",
     "raise_alarm_signal",
     "misc",
+    "checksum",
     "loggers",
     "InfiniteProcess",
     "SimpleMultiprocessingQueue",
@@ -72,8 +79,13 @@ __all__ = [
     "get_current_file_abs_path",
     "parallelism_utils",
     "safe_get",
-    "find_log_message_in_queue",
-    "LogMessageNotFoundError",
+    "drain_queue",
     "LogFolderGivenWithoutFilePrefixError",
     "LogFolderDoesNotExistError",
+    "compute_crc32_bytes_of_large_file",
+    "compute_crc32_hex_of_large_file",
+    "compute_crc32_and_write_to_file_head",
+    "validate_file_head_crc32",
+    "Crc32InFileHeadDoesNotMatchExpectedValueError",
+    "Crc32ChecksumValidationFailureError",
 ]

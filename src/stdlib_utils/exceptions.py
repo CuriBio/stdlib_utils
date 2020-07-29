@@ -39,13 +39,17 @@ class NoMatchingXmlElementError(Exception):
         )
 
 
-class LogMessageNotFoundError(Exception):
-    pass
-
-
 class LogFolderDoesNotExistError(Exception):
     pass
 
 
 class LogFolderGivenWithoutFilePrefixError(Exception):
+    pass
+
+
+class Crc32InFileHeadDoesNotMatchExpectedValueError(Exception):
+    pass
+
+
+class Crc32ChecksumValidationFailureError(Exception):
     pass

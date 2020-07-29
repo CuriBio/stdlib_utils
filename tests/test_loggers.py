@@ -98,8 +98,9 @@ def test_configure_logging__with_path_to_log_folder_and_file_name__uses_path_as_
 
 
 def test_configure_logging__raises_error_if_path_to_folder_does_not_exist(mocker):
-    with pytest.raises(LogFolderDoesNotExistError):
-        configure_logging(log_file_prefix="my_log", path_to_log_folder="fake_folder")
+    test_folder = "fake_folder"
+    with pytest.raises(LogFolderDoesNotExistError, match=test_folder):
+        configure_logging(log_file_prefix="my_log", path_to_log_folder=test_folder)
 
 
 def test_configure_logging__raises_error_if_path_to_folder_given_without_file_name(

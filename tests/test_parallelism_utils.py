@@ -5,25 +5,25 @@ import queue
 import time
 
 import pytest
-from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import parallelism_utils
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
 
+from .fixtures_parallelism import InfiniteProcessThatCountsIterations
 from .fixtures_parallelism import InfiniteProcessThatRaisesError
+from .fixtures_parallelism import InfiniteProcessThatTracksSetup
 from .fixtures_parallelism import InfiniteThreadThatRaisesError
 
 
 def test_invoke_process_run_and_check_errors__passes_values_for_InfiniteProcess(mocker):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
+    p = InfiniteProcessThatCountsIterations(error_queue)
     invoke_process_run_and_check_errors(p)  # runs once by default
-    assert spied_run.call_count == 1
+    assert p.get_num_iterations() == 1
 
     invoke_process_run_and_check_errors(p, num_iterations=2)
-    assert spied_run.call_count == 3
+    assert p.get_num_iterations() == 3
 
 
 def test_invoke_process_run_and_check_errors__pauses_long_enough_to_process_standard_multiprocessing_queue(
@@ -57,17 +57,14 @@ def test_invoke_process_run_and_check_errors__does_not_run_setup_or_teardown_by_
     mocker,
 ):
     error_queue = SimpleMultiprocessingQueue()
-    p = InfiniteProcess(error_queue)
-    spied_run = mocker.spy(p, "_commands_for_each_run_iteration")
-    spied_setup = mocker.spy(p, "_setup_before_loop")
-    spied_teardown = mocker.spy(p, "_teardown_after_loop")
+    p = InfiniteProcessThatTracksSetup(error_queue)
     invoke_process_run_and_check_errors(p)  # runs once by default
-    assert spied_run.call_count == 1
-    assert spied_setup.call_count == 0
-    assert spied_teardown.call_count == 0
+    assert p.get_num_iterations() == 1
+    assert p.is_setup() is False
+    assert p.is_teardown_complete() is False
 
     invoke_process_run_and_check_errors(p, num_iterations=2)
-    assert spied_run.call_count == 3
+    assert p.get_num_iterations() == 3
 
 
 def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_InfiniteThread(
