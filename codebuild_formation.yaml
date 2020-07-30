@@ -90,7 +90,7 @@ Resources:
         Image: aws/codebuild/standard:4.0-20.05.05
         Type: LINUX_CONTAINER
         EnvironmentVariables:
-          - Name: APPLY_TAG
+          - Name: PUBLISH_TO_PYPI
             Type: PLAINTEXT
             Value: ""
           - Name: PYTEST_RANDOMLY_SEED
