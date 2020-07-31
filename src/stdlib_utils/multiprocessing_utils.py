@@ -65,18 +65,18 @@ class InfiniteProcess(InfiniteLoopingParallelismMixIn, Process):
 
     # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
     def run(  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
-        self,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        self,
         num_iterations: Optional[  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
             int  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
-        ] = None,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
-        perform_setup_before_loop: bool = True,  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
-        perform_teardown_after_loop: bool = True,
-    ) -> None:  # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
+        ] = None,
+        perform_setup_before_loop: bool = True,
+        perform_teardown_after_loop: bool = True,  # pylint: disable=duplicate-code
+    ) -> None:
         # For some reason pylint freaks out if this method is only defined in the MixIn https://github.com/PyCQA/pylint/issues/1233
         # pylint: disable=duplicate-code # pylint is freaking out and requiring the method to be redefined
         super().run(
             num_iterations=num_iterations,
-            perform_setup_before_loop=perform_setup_before_loop,
+            perform_setup_before_loop=perform_setup_before_loop,  # pylint: disable=duplicate-code
             perform_teardown_after_loop=perform_teardown_after_loop,
         )
 

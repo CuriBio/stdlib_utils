@@ -147,7 +147,9 @@ def test_InfiniteProcess__queue_is_populated_with_error_occuring_during_live_spa
     # spied_print_exception = mocker.spy(
     #     parallelism_framework, "print_exception"
     # )  # Eli (3/13/20) can't figure out why this isn't working (call count never gets to 1), so just asserting about print instead
-    mocker.patch("builtins.print")  # don't print the error message to stdout
+    mocker.patch(
+        "builtins.print", autospec=True
+    )  # don't print the error message to stdout
     expected_error = ValueError("test message")
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcessThatRaisesError(error_queue)
