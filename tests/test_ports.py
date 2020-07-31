@@ -7,7 +7,7 @@ from stdlib_utils import ports
 from stdlib_utils import PortUnavailableError
 
 
-@pytest.mark.timeout(1)
+@pytest.mark.timeout(2)
 def test_confirm_port_available__returns_quickly_when_available_even_with_long_timeout():
     confirm_port_available(7654, timeout=10)
 
