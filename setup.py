@@ -10,7 +10,7 @@ setup(
     description="Various utility functions and classes using only the Python standard lib",
     url="https://github.com/CuriBio/stdlib_utils",
     author="Curi Bio",
-    author_email="eli@curibio.com",
+    author_email="contact@curibio.com",
     license="MIT",
     packages=find_packages("src"),
     package_dir={"": "src"},

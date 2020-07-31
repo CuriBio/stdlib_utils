@@ -1,10 +1,10 @@
 # sudo apt-get install python3-venv
 # python3 -m venv venv
 
-# pip install -r requirements-dev.txt --find-links python_pip_package_links/package_links.html
+# pip install -r requirements-dev.txt
 
 # install the current package in editable mode
-# pip install -e . --find-links python_pip_package_links/package_links.html
+# pip install -e .
 
 # to store git credentials:
 # git config credential.helper store
