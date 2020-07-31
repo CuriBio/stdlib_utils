@@ -16,14 +16,14 @@ from stdlib_utils import validate_file_head_crc32
 
 
 FILE_FOR_HASHING = os.path.join(
-    get_current_file_abs_directory(), "file_for_crc32_hashing.txt"
+    get_current_file_abs_directory(), "file_for_crc32_hashing.bin"
 )
 
 FILE_WITH_CHECKSUM_AT_HEAD = os.path.join(
-    get_current_file_abs_directory(), "file_with_crc32_checksum_at_head.txt"
+    get_current_file_abs_directory(), "file_with_crc32_checksum_at_head.bin"
 )
 FILE_WITH_INCORRECT_CHECKSUM_AT_HEAD = os.path.join(
-    get_current_file_abs_directory(), "file_with_incorrect_crc32_checksum_at_head.txt"
+    get_current_file_abs_directory(), "file_with_incorrect_crc32_checksum_at_head.bin"
 )
 
 
