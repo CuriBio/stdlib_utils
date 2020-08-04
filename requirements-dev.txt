@@ -1,10 +1,10 @@
 # sudo apt-get install python3-venv
 # python3 -m venv venv
 
-# pip install -r requirements-dev.txt --find-links python_pip_package_links/package_links.html
+# pip install -r requirements-dev.txt
 
 # install the current package in editable mode
-# pip install -e . --find-links python_pip_package_links/package_links.html
+# pip install -e .
 
 # to store git credentials:
 # git config credential.helper store
@@ -17,10 +17,8 @@ pytest-randomly==3.3.1
 sphinx==3.0.4
 pylint==2.5.2
 pytest-pylint==0.17.0
+zest.releaser[recommended]==6.20.1
 
 pytest-mock==1.11.1
 pytest-timeout==1.3.4
 freezegun==0.3.14
-
-
-

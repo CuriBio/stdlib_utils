@@ -42,9 +42,9 @@ phases:
       - SPHINXOPTS="-W" make --directory=docs html # the -W flag treats warnings as errors to cause build failures
   post_build:
     commands:
-      # Only run the following command if the APPLY_TAG environmental variable is set (i.e. =1) https://stackoverflow.com/questions/39619956/short-way-to-run-command-if-variable-is-set  (extra outer parentheses needed to make YAML parser happy)
+      # Only run the following command if the PUBLISH_TO_PYPI environmental variable is set (i.e. =1) https://stackoverflow.com/questions/39619956/short-way-to-run-command-if-variable-is-set  (extra outer parentheses needed to make YAML parser happy)
       # Grab the version from the setup.py file using a grep "look-behind" https://stackoverflow.com/questions/30776265/how-to-grep-for-value-in-a-key-value-store-from-plain-text
       # If this is attempted on any branch other than master, it should fail because the role only has permission to push to the master branch
       # Colon (or maybe semi-colon) is causing issue with CodeBuild YAML parser, so needed to wrap whole command in single quote
-      - 'if [ "$APPLY_TAG" != "" ] ; then if [ "$SHA_OF_LOCAL_COMMIT" = "$SHA_OF_REMOTE_MASTER" ]; then echo "Current branch matches SHA of remote master ($SHA_OF_REMOTE_MASTER) so tags are allowed"; else echo "Current branch is not master. SHA of current commit is $SHA_OF_LOCAL_COMMIT but SHA of remote master is $SHA_OF_REMOTE_MASTER" && exit 1; fi && echo "Applying tag to commit" && git tag "$(grep -Po "(?<=    version=\")[0-9.]+" setup.py)" && echo "Tag applied, attempting to push" && git push --tags ; fi'
+      - 'if [ "$PUBLISH_TO_PYPI" = "1" ] ; then if [ "$SHA_OF_LOCAL_COMMIT" = "$SHA_OF_REMOTE_MASTER" ]; then echo "Current branch matches SHA of remote master ($SHA_OF_REMOTE_MASTER) so publishing is allowed"; else echo "Current branch is not master. SHA of current commit is $SHA_OF_LOCAL_COMMIT but SHA of remote master is $SHA_OF_REMOTE_MASTER" && exit 1; fi && echo "Publishing to PyPI" && python3 setup.py sdist && git tag "$(grep -Po "(?<=    version=\")[0-9.]+" setup.py)" && echo "Tag applied, attempting to push" && git push --tags && twine upload dist/* ; fi'
       - echo "Build completed on $(date)"

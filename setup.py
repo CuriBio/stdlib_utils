@@ -6,11 +6,11 @@ from setuptools import setup
 
 setup(
     name="stdlib_utils",
-    version="0.1.31",
-    description="CREATE A DESCRIPTION",
-    url="https://git-codecommit.us-east-1.amazonaws.com/v1/repos/stdlib_utils",
+    version="0.2",
+    description="Various utility functions and classes using only the Python standard lib",
+    url="https://github.com/CuriBio/stdlib_utils",
     author="Curi Bio",
-    author_email="eli@curibio.com",
+    author_email="contact@curibio.com",
     license="MIT",
     packages=find_packages("src"),
     package_dir={"": "src"},
