@@ -164,7 +164,7 @@ def test_print_error_message(mocker):
 
 
 def test_get_current_file_abs_path():
-    expected_to_contain = os.path.join("stdlib_utils", "tests", "test_misc.py")
+    expected_to_contain = os.path.join("stdlib-utils", "tests", "test_misc.py")
     actual = get_current_file_abs_path()
 
     assert actual.endswith(expected_to_contain) is True
@@ -175,7 +175,7 @@ def test_get_current_file_abs_path():
 
 
 def test_get_current_file_abs_directory():
-    expected_to_contain = os.path.join("stdlib_utils", "tests")
+    expected_to_contain = os.path.join("stdlib-utils", "tests")
     actual = get_current_file_abs_directory()
 
     assert actual.endswith(expected_to_contain)
