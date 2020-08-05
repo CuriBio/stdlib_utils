@@ -75,7 +75,7 @@ Resources:
         GitCloneDepth: 1
 
         ReportBuildStatus: True
-        Location: "https://github.com/CuriBio/stdlib_utils/"
+        Location: "https://github.com/CuriBio/stdlib-utils/"
         Type: GITHUB
 
       QueuedTimeoutInMinutes: 10
