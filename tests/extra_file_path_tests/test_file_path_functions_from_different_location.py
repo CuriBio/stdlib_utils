@@ -8,7 +8,7 @@ from stdlib_utils import get_current_file_abs_path
 
 def test_get_current_file_abs_path():
     expected_to_contain = os.path.join(
-        "stdlib_utils",
+        "stdlib-utils",
         "tests",
         "extra_file_path_tests",
         "test_file_path_functions_from_different_location.py",
@@ -22,7 +22,7 @@ def test_get_current_file_abs_path():
 
 
 def test_get_current_file_abs_directory():
-    expected_to_contain = os.path.join("stdlib_utils", "tests", "extra_file_path_tests")
+    expected_to_contain = os.path.join("stdlib-utils", "tests", "extra_file_path_tests")
     actual = get_current_file_abs_directory()
     assert actual.endswith(expected_to_contain)
 
