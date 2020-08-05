@@ -3,6 +3,10 @@ version: 0.2 # this is the version for the buildspec parser, not the file versio
 env:
   git-credential-helper: yes
 
+  parameter-store:
+    TWINE_USERNAME: /CodeBuild/general/pypi_username
+    TWINE_PASSWORD: /CodeBuild/general/pypi_password
+
 phases:
   install:
     runtime-versions:
