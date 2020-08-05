@@ -8,8 +8,7 @@ global-exclude .flake8
 global-exclude mypy.ini
 global-exclude docs/**
 global-exclude pytest.ini
-global-exclude tests**.py
-global-exclude tests**.bin
+global-exclude tests/**
 global-exclude *.yaml
 global-exclude tests/pylintrc
 global-exclude *.pyc
