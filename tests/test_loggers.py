@@ -8,6 +8,7 @@ from unittest.mock import ANY
 from freezegun import freeze_time
 import pytest
 from stdlib_utils import configure_logging
+from stdlib_utils import is_system_windows
 from stdlib_utils import LogFolderDoesNotExistError
 from stdlib_utils import LogFolderGivenWithoutFilePrefixError
 from stdlib_utils import loggers
@@ -75,6 +76,9 @@ def test_configure_logging__with_file_name__creates_dir_using_resource_path(mock
         assert file_handler.baseFilename == os.path.join(
             tmp_dir, "logs", "my_log__2020_02_10_131722.txt"
         )
+        if is_system_windows():
+            # Tanner (8/7/20): windows raises error if file is not closed
+            file_handler.close()
 
 
 @freeze_time("2020-07-15 10:35:08")
@@ -95,6 +99,9 @@ def test_configure_logging__with_path_to_log_folder_and_file_name__uses_path_as_
         assert file_handler.baseFilename == os.path.join(
             tmp_dir, "my_log__2020_07_15_103508.txt"
         )
+        if is_system_windows():
+            # Tanner (8/7/20): windows raises error if file is not closed
+            file_handler.close()
 
 
 def test_configure_logging__raises_error_if_path_to_folder_does_not_exist(mocker):
