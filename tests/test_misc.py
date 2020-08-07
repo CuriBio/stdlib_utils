@@ -82,23 +82,19 @@ def test_raise_alarm_signal__raises_on_linux(mocker):
     is_windows = is_system_windows()
     # Eli (1/9/20) can't really figure out how to mock this very well, so creating a funky call out to a dummy signal handler
     mocker.patch.object(misc, "is_system_windows", autospec=True, return_value=False)
-    if is_windows:
-        mocked_setitimer = mocker.patch.object(
-            signal, "setitimer"
-        )  # Eli (1/9/20): intentionally leaving out autospec=True because on windows it doesn't appear that setitimer exists at all in the module
-    else:
+    if not is_windows:
         mocked_setitimer = mocker.spy(signal, "setitimer")
     a_list = [False]
-    signal.signal(14, functools.partial(dummy_signal_handler, a_list))
     if is_windows:
         mocker.patch.object(signal,)
+    signal.signal(14, functools.partial(dummy_signal_handler, a_list))
     raise_alarm_signal()
     time.sleep(0.01)
     if not is_windows:
         # if the system is actually linux, make sure to check the live result
         assert a_list[0] is True
-    # make sure it was done in a linux-compatible way
-    mocked_setitimer.assert_called_once()
+        # make sure it was done in a linux-compatible way
+        mocked_setitimer.assert_called_once()
 
 
 def test_raise_alarm_signal__raises_on_windows(mocker):
@@ -119,8 +115,8 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
     if is_windows:
         # if the system is actually linux, make sure to check the live result
         assert a_list[0] is True
-    # make sure it was done in a windows-compatible way
-    mocked_cdll.assert_called_once_with("ucrtbase")
+        # make sure it was done in a windows-compatible way
+        mocked_cdll.assert_called_once_with("ucrtbase")
 
 
 def test_create_directory_if_not_exists__when_no_directory_present():
