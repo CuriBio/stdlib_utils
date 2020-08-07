@@ -79,15 +79,17 @@ def dummy_signal_handler(my_list, arg1, arg2):
 
 
 def test_raise_alarm_signal__raises_on_linux(mocker):
-    is_windows = is_system_windows()
     # Eli (1/9/20) can't really figure out how to mock this very well, so creating a funky call out to a dummy signal handler
     mocker.patch.object(misc, "is_system_windows", autospec=True, return_value=False)
-    if not is_windows:
-        mocked_setitimer = mocker.spy(signal, "setitimer")
+
+    is_windows = is_system_windows()
+
     a_list = [False]
     if is_windows:
-        mocker.patch.object(signal,)
-    signal.signal(14, functools.partial(dummy_signal_handler, a_list))
+        mocker.patch.object(signal, "setitimer", autospec=True, create=True)
+    else:
+        mocked_setitimer = mocker.spy(signal, "setitimer")
+        signal.signal(14, functools.partial(dummy_signal_handler, a_list))
     raise_alarm_signal()
     time.sleep(0.01)
     if not is_windows:
@@ -101,20 +103,15 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
     is_windows = is_system_windows()
     # Eli (1/9/20) can't really figure out how to mock this very well, so creating a funky call out to a dummy signal handler
     mocker.patch.object(misc, "is_system_windows", autospec=True, return_value=True)
-    a_list = [False]
     if is_windows:
         mocked_cdll = mocker.spy(ctypes, "CDLL")
     else:
         mocked_cdll = mocker.patch.object(
             ctypes, "CDLL", autospec=True, return_value={"raise": lambda x: None}
         )
-
-    signal.signal(14, functools.partial(dummy_signal_handler, a_list))
     raise_alarm_signal()
     time.sleep(0.01)
     if is_windows:
-        # if the system is actually linux, make sure to check the live result
-        assert a_list[0] is True
         # make sure it was done in a windows-compatible way
         mocked_cdll.assert_called_once_with("ucrtbase")
 
