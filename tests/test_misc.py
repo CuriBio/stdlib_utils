@@ -86,7 +86,8 @@ def test_raise_alarm_signal__raises_on_linux(mocker):
 
     a_list = [False]
     if is_windows:
-        mocker.patch.object(signal, "setitimer", autospec=True, create=True)
+        mocker.patch.object(signal, "setitimer", create=True)
+        mocker.patch.object(signal, "ITIMER_REAL", create=True)
     else:
         mocked_setitimer = mocker.spy(signal, "setitimer")
         signal.signal(14, functools.partial(dummy_signal_handler, a_list))
