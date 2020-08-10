@@ -36,6 +36,7 @@ def compute_crc32_bytes_of_large_file(
         if not itered_bytes:
             break
         checksum = crc32(itered_bytes, checksum)
+        print(f"checksum: {checksum}")  # allow-print
     return struct.pack(">I", checksum)
 
 
