@@ -106,8 +106,14 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
     mocker.patch.object(misc, "is_system_windows", autospec=True, return_value=True)
     if is_windows:
         c_raise = ctypes.CDLL("ucrtbase")
-        mocked_cdll = mocker.spy(ctypes, "CDLL")
         mocked_c_raise = mocker.patch.object(c_raise, "raise", autospec=True)
+
+        def side_effect(*args):
+            return {"raise": mocked_c_raise}
+
+        mocked_cdll = mocker.patch.object(
+            ctypes, "CDLL", autospec=True, side_effect=side_effect()
+        )
     else:
         mocked_cdll = mocker.patch.object(
             ctypes, "CDLL", autospec=True, return_value={"raise": lambda x: None}
