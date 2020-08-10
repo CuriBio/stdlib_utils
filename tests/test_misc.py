@@ -105,7 +105,9 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
     # Eli (1/9/20) can't really figure out how to mock this very well, so creating a funky call out to a dummy signal handler
     mocker.patch.object(misc, "is_system_windows", autospec=True, return_value=True)
     if is_windows:
+        c_raise = ctypes.CDLL("ucrtbase")
         mocked_cdll = mocker.spy(ctypes, "CDLL")
+        mocked_c_raise = mocker.patch.object(c_raise, "raise", autospec=True)
     else:
         mocked_cdll = mocker.patch.object(
             ctypes, "CDLL", autospec=True, return_value={"raise": lambda x: None}
@@ -115,6 +117,7 @@ def test_raise_alarm_signal__raises_on_windows(mocker):
     if is_windows:
         # make sure it was done in a windows-compatible way
         mocked_cdll.assert_called_once_with("ucrtbase")
+        mocked_c_raise.assert_called_once_with(14)
 
 
 def test_create_directory_if_not_exists__when_no_directory_present():
