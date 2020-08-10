@@ -81,7 +81,7 @@ jobs:
         run: pre-commit run -a
 
       - name: Run Tests
-        run: pytest -xsvv --cov-report=xml
+        run: pytest tests/test_checksum.py -xsvv --cov-report=xml
 
       - name: Confirm Sphinx Docs build correctly
         # only check Sphinx docs build on the fastest job
