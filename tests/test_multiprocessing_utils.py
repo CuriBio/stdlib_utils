@@ -75,7 +75,7 @@ def test_InfiniteProcess_can_be_run_and_stopped():
     assert p.exitcode == 0
 
 
-@pytest.mark.timeout(2)  # set a timeout because the test can hang as a failure mode
+@pytest.mark.timeout(4)  # set a timeout because the test can hang as a failure mode
 def test_InfiniteProcess_can_be_run_and_soft_stopped():
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcess(error_queue)

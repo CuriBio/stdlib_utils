@@ -27,7 +27,6 @@ from .misc import get_path_to_frozen_bundle
 from .misc import is_frozen_as_exe
 from .misc import is_system_windows
 from .misc import print_exception
-from .misc import raise_alarm_signal
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
@@ -44,6 +43,8 @@ from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
 from .xml import find_exactly_one_xml_element
 
+# from .misc import raise_alarm_signal
+
 __all__ = [
     "configure_logging",
     "resource_path",
@@ -52,7 +53,7 @@ __all__ = [
     "get_path_to_frozen_bundle",
     "is_system_windows",
     "create_directory_if_not_exists",
-    "raise_alarm_signal",
+    # "raise_alarm_signal",
     "misc",
     "checksum",
     "loggers",
