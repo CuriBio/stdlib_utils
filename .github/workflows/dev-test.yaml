@@ -92,13 +92,14 @@ jobs:
         # only upload coverage from fastest job
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.7
         uses: codecov/codecov-action@v1
-        timeout-minutes: 1
+        timeout-minutes: 1   # Tanner (8/11/20): once fundmental issue with codecov timeout is fixed, remove this line and the next
+        continue-on-error: true
         with:
           file: ./coverage.xml
           flags: unittests
           env_vars: OS,PYTHON
           name: codecov-umbrella
-          fail_ci_if_error: false  # Tanner (8/7/20): once fundmental issue with codecov timeout is fixed, change this back to True
+          fail_ci_if_error: true
 
       - name: Run prerelease
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.7
