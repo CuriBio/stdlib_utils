@@ -129,25 +129,21 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     p = generic_infinite_looper()
     percent_use_values = p.get_percent_use_values()
 
-    mocked_elapsed_time = mocker.spy(
+    spied_elapsed_time = mocker.spy(
         p, "get_elapsed_time_since_last_performance_measurement"
     )
 
     p.run(num_iterations=3)
     idle_time_secs = p.get_idle_time_ns()
     actual_first_return = p.reset_performance_tracker()
-    expected_percent_use_1 = 100 * (
-        1 - idle_time_secs / mocked_elapsed_time.return_value
-    )
+    expected_percent_use_1 = 100 * (1 - idle_time_secs / spied_elapsed_time.spy_return)
     assert actual_first_return["percent_use"] == expected_percent_use_1
     assert percent_use_values[0] == expected_percent_use_1
 
     p.run(num_iterations=5)
     idle_time_secs = p.get_idle_time_ns()
     actual_second_return = p.reset_performance_tracker()
-    expected_percent_use_2 = 100 * (
-        1 - idle_time_secs / mocked_elapsed_time.return_value
-    )
+    expected_percent_use_2 = 100 * (1 - idle_time_secs / spied_elapsed_time.spy_return)
     assert actual_second_return["percent_use"] == expected_percent_use_2
     assert percent_use_values[1] == expected_percent_use_2
 
