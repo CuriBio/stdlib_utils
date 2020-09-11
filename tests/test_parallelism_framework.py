@@ -280,3 +280,22 @@ def test_InfiniteLoopingParallelismMixIn__get_percent_use_metrics__returns_corre
     assert actual["mean"] == round(
         sum(expected_percent_use_vals) / len(expected_percent_use_vals), 6
     )
+
+
+def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_longest_iterations(
+    mocker,
+):
+    expected_longest_times = list(range(1, 6))
+
+    p = generic_infinite_looper()
+
+    iteration_times = [0 for _ in range(p.num_longest_iterations)]
+    iteration_times.extend(expected_longest_times)
+    mocker.patch.object(
+        p, "calculate_iteration_time_ns", autospec=True, side_effect=iteration_times
+    )
+
+    p.run(num_iterations=len(iteration_times) + 1)
+
+    actual = p.reset_performance_tracker()
+    assert actual["longest_iterations"] == expected_longest_times

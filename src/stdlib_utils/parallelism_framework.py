@@ -35,6 +35,8 @@ class InfiniteLoopingParallelismMixIn:
         minimum_iteration_duration_seconds: In order for the process not to unnecessarily consume CPU resources while looping, the loop will sleep at the end of each iteration until this threshold duration is met.
     """
 
+    num_longest_iterations = 5
+
     def __init__(
         self,
         fatal_error_reporter: Union[
@@ -63,6 +65,7 @@ class InfiniteLoopingParallelismMixIn:
         self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
         self._idle_iteration_time_ns = 0
         self._percent_use_values: List[float] = list()
+        self._longest_iterations: List[int] = list()
         self._init_performance_measurements()
 
     def _init_performance_measurements(self) -> None:
@@ -94,6 +97,7 @@ class InfiniteLoopingParallelismMixIn:
             - self._idle_iteration_time_ns
             / self.get_elapsed_time_since_last_performance_measurement()
         )
+        out_dict["longest_iterations"] = self._longest_iterations
         self._percent_use_values.append(out_dict["percent_use"])
         self._reset_performance_measurements()
         return out_dict
@@ -223,8 +227,16 @@ class InfiniteLoopingParallelismMixIn:
     def _sleep_for_idle_time_during_iteration(
         self, start_timepoint_of_iteration: int
     ) -> None:
-        stop_timepoint_of_iteration = time.perf_counter_ns()
-        iteration_time_ns = stop_timepoint_of_iteration - start_timepoint_of_iteration
+        iteration_time_ns = self.calculate_iteration_time_ns(
+            start_timepoint_of_iteration
+        )
+
+        if len(self._longest_iterations) < 5:
+            self._longest_iterations.append(iteration_time_ns)
+        elif iteration_time_ns > min(self._longest_iterations):
+            self._longest_iterations[
+                self._longest_iterations.index(min(self._longest_iterations))
+            ] = iteration_time_ns
 
         idle_time_ns = (
             int(self.get_minimum_iteration_duration_seconds() * 10 ** 9)
@@ -233,6 +245,10 @@ class InfiniteLoopingParallelismMixIn:
         if idle_time_ns > 0:
             self._idle_iteration_time_ns += idle_time_ns
             time.sleep(idle_time_ns / 10 ** 9)
+
+    @staticmethod
+    def calculate_iteration_time_ns(start_timepoint_of_iteration: int) -> int:
+        return time.perf_counter_ns() - start_timepoint_of_iteration
 
     def _commands_for_each_run_iteration(self) -> None:
         """Execute additional commands inside the run loop."""
