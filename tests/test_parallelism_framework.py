@@ -9,6 +9,7 @@ import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
+from stdlib_utils import parallelism_framework
 from stdlib_utils import SimpleMultiprocessingQueue
 
 
@@ -292,7 +293,10 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_lon
     iteration_times = [0 for _ in range(p.num_longest_iterations)]
     iteration_times.extend(expected_longest_times)
     mocker.patch.object(
-        p, "calculate_iteration_time_ns", autospec=True, side_effect=iteration_times
+        parallelism_framework,
+        "calculate_iteration_time_ns",
+        autospec=True,
+        side_effect=iteration_times,
     )
 
     p.run(num_iterations=len(iteration_times) + 1)

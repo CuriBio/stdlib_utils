@@ -23,8 +23,16 @@ from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import SimpleMultiprocessingQueue
 
 
+def calculate_iteration_time_ns(start_timepoint_of_iteration: int) -> int:
+    return time.perf_counter_ns() - start_timepoint_of_iteration
+
+
+# pylint: disable=too-many-instance-attributes
 class InfiniteLoopingParallelismMixIn:
     """Mix-in for infinite looping.
+
+    Attrs:
+        num_longest_iterations: the quantity of longest iterations the object should keep track of.
 
     Args:
         fatal_error_reporter: a queue to report any fatal unhandled errors back to the thread that started this process
@@ -227,16 +235,17 @@ class InfiniteLoopingParallelismMixIn:
     def _sleep_for_idle_time_during_iteration(
         self, start_timepoint_of_iteration: int
     ) -> None:
-        iteration_time_ns = self.calculate_iteration_time_ns(
-            start_timepoint_of_iteration
-        )
+        iteration_time_ns = calculate_iteration_time_ns(start_timepoint_of_iteration)
 
-        if len(self._longest_iterations) < 5:
-            self._longest_iterations.append(iteration_time_ns)
-        elif iteration_time_ns > min(self._longest_iterations):
-            self._longest_iterations[
-                self._longest_iterations.index(min(self._longest_iterations))
-            ] = iteration_time_ns
+        longest_iterations = self._longest_iterations
+        if len(longest_iterations) < 5:
+            longest_iterations.append(iteration_time_ns)
+        else:
+            min_longest_iteration = min(longest_iterations)
+            if iteration_time_ns > min_longest_iteration:
+                longest_iterations[
+                    longest_iterations.index(min_longest_iteration)
+                ] = iteration_time_ns
 
         idle_time_ns = (
             int(self.get_minimum_iteration_duration_seconds() * 10 ** 9)
@@ -245,10 +254,6 @@ class InfiniteLoopingParallelismMixIn:
         if idle_time_ns > 0:
             self._idle_iteration_time_ns += idle_time_ns
             time.sleep(idle_time_ns / 10 ** 9)
-
-    @staticmethod
-    def calculate_iteration_time_ns(start_timepoint_of_iteration: int) -> int:
-        return time.perf_counter_ns() - start_timepoint_of_iteration
 
     def _commands_for_each_run_iteration(self) -> None:
         """Execute additional commands inside the run loop."""
