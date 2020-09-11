@@ -9,6 +9,7 @@ import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
+from stdlib_utils import parallelism_framework
 from stdlib_utils import SimpleMultiprocessingQueue
 
 
@@ -129,25 +130,21 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_and
     p = generic_infinite_looper()
     percent_use_values = p.get_percent_use_values()
 
-    mocked_elapsed_time = mocker.spy(
+    spied_elapsed_time = mocker.spy(
         p, "get_elapsed_time_since_last_performance_measurement"
     )
 
     p.run(num_iterations=3)
     idle_time_secs = p.get_idle_time_ns()
     actual_first_return = p.reset_performance_tracker()
-    expected_percent_use_1 = 100 * (
-        1 - idle_time_secs / mocked_elapsed_time.return_value
-    )
+    expected_percent_use_1 = 100 * (1 - idle_time_secs / spied_elapsed_time.spy_return)
     assert actual_first_return["percent_use"] == expected_percent_use_1
     assert percent_use_values[0] == expected_percent_use_1
 
     p.run(num_iterations=5)
     idle_time_secs = p.get_idle_time_ns()
     actual_second_return = p.reset_performance_tracker()
-    expected_percent_use_2 = 100 * (
-        1 - idle_time_secs / mocked_elapsed_time.return_value
-    )
+    expected_percent_use_2 = 100 * (1 - idle_time_secs / spied_elapsed_time.spy_return)
     assert actual_second_return["percent_use"] == expected_percent_use_2
     assert percent_use_values[1] == expected_percent_use_2
 
@@ -284,3 +281,25 @@ def test_InfiniteLoopingParallelismMixIn__get_percent_use_metrics__returns_corre
     assert actual["mean"] == round(
         sum(expected_percent_use_vals) / len(expected_percent_use_vals), 6
     )
+
+
+def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_longest_iterations(
+    mocker,
+):
+    expected_longest_times = list(range(1, 6))
+
+    p = generic_infinite_looper()
+
+    iteration_times = [0 for _ in range(p.num_longest_iterations)]
+    iteration_times.extend(expected_longest_times)
+    mocker.patch.object(
+        parallelism_framework,
+        "calculate_iteration_time_ns",
+        autospec=True,
+        side_effect=iteration_times,
+    )
+
+    p.run(num_iterations=len(iteration_times) + 1)
+
+    actual = p.reset_performance_tracker()
+    assert actual["longest_iterations"] == expected_longest_times

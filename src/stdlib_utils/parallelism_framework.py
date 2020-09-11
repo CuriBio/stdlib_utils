@@ -23,8 +23,16 @@ from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import SimpleMultiprocessingQueue
 
 
+def calculate_iteration_time_ns(start_timepoint_of_iteration: int) -> int:
+    return time.perf_counter_ns() - start_timepoint_of_iteration
+
+
+# pylint: disable=too-many-instance-attributes
 class InfiniteLoopingParallelismMixIn:
     """Mix-in for infinite looping.
+
+    Attrs:
+        num_longest_iterations: the quantity of longest iterations the object should keep track of.
 
     Args:
         fatal_error_reporter: a queue to report any fatal unhandled errors back to the thread that started this process
@@ -34,6 +42,8 @@ class InfiniteLoopingParallelismMixIn:
         teardown_complete_event: After the infinite loop is exited, the _teardown_after_loop() method will be called. This event can be monitored by the parent thread to determine when the teardown has completed and the process is ready to have any needed additional clean-up performed by the parent before the parent calls .join().
         minimum_iteration_duration_seconds: In order for the process not to unnecessarily consume CPU resources while looping, the loop will sleep at the end of each iteration until this threshold duration is met.
     """
+
+    num_longest_iterations = 5
 
     def __init__(
         self,
@@ -63,6 +73,7 @@ class InfiniteLoopingParallelismMixIn:
         self._minimum_iteration_duration_seconds = minimum_iteration_duration_seconds
         self._idle_iteration_time_ns = 0
         self._percent_use_values: List[float] = list()
+        self._longest_iterations: List[int] = list()
         self._init_performance_measurements()
 
     def _init_performance_measurements(self) -> None:
@@ -94,6 +105,7 @@ class InfiniteLoopingParallelismMixIn:
             - self._idle_iteration_time_ns
             / self.get_elapsed_time_since_last_performance_measurement()
         )
+        out_dict["longest_iterations"] = self._longest_iterations
         self._percent_use_values.append(out_dict["percent_use"])
         self._reset_performance_measurements()
         return out_dict
@@ -223,8 +235,17 @@ class InfiniteLoopingParallelismMixIn:
     def _sleep_for_idle_time_during_iteration(
         self, start_timepoint_of_iteration: int
     ) -> None:
-        stop_timepoint_of_iteration = time.perf_counter_ns()
-        iteration_time_ns = stop_timepoint_of_iteration - start_timepoint_of_iteration
+        iteration_time_ns = calculate_iteration_time_ns(start_timepoint_of_iteration)
+
+        longest_iterations = self._longest_iterations
+        if len(longest_iterations) < 5:
+            longest_iterations.append(iteration_time_ns)
+        else:
+            min_longest_iteration = min(longest_iterations)
+            if iteration_time_ns > min_longest_iteration:
+                longest_iterations[
+                    longest_iterations.index(min_longest_iteration)
+                ] = iteration_time_ns
 
         idle_time_ns = (
             int(self.get_minimum_iteration_duration_seconds() * 10 ** 9)
