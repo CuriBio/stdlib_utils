@@ -47,6 +47,10 @@ class LogFolderGivenWithoutFilePrefixError(Exception):
     pass
 
 
+class UnrecognizedLoggingFormatError(Exception):
+    pass
+
+
 class Crc32InFileHeadDoesNotMatchExpectedValueError(Exception):
     pass
 

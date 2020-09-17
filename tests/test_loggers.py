@@ -12,6 +12,7 @@ from stdlib_utils import LogFolderDoesNotExistError
 from stdlib_utils import LogFolderGivenWithoutFilePrefixError
 from stdlib_utils import loggers
 from stdlib_utils import misc
+from stdlib_utils import UnrecognizedLoggingFormatError
 
 
 def test_configure_logging__default_args(mocker):
@@ -40,6 +41,37 @@ def test_configure_logging__default_args(mocker):
     ].stream.name == "<stdout>" or "_pytest.capture.EncodedFile" in str(
         type(actual_handlers[0].stream)
     )
+
+
+def test_configure_logging__with_notebook_format(mocker):
+    spied_basic_config = mocker.spy(logging, "basicConfig")
+    configure_logging(logging_format="notebook")
+
+    assert (
+        logging.Formatter.converter  # pylint: disable=comparison-with-callable
+        == time.gmtime  # pylint: disable=comparison-with-callable
+    )
+
+    assert spied_basic_config.call_count == 1
+    _, kwargs = spied_basic_config.call_args_list[0]
+    assert set(kwargs.keys()) == set(["level", "format", "handlers"])
+    assert kwargs["level"] == logging.INFO
+    assert kwargs["format"] == "[%(asctime)s UTC] %(levelname)s - %(message)s"
+    actual_handlers = kwargs["handlers"]
+    assert len(actual_handlers) == 1
+
+    # if pytest is automatically capturing stdout, then it does some adjustments to change the output, so the second or clause is needed
+    assert actual_handlers[
+        0
+    ].stream.name == "<stdout>" or "_pytest.capture.EncodedFile" in str(
+        type(actual_handlers[0].stream)
+    )
+
+
+def test_configure_logging__raises_error_with_unrecognized_logging_format():
+    test_format = "fake_format"
+    with pytest.raises(UnrecognizedLoggingFormatError, match=test_format):
+        configure_logging(logging_format=test_format)
 
 
 def test_configure_logging__sets_log_level_to_provided_arg(mocker):

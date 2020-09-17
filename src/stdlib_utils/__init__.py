@@ -18,6 +18,7 @@ from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
+from .exceptions import UnrecognizedLoggingFormatError
 from .loggers import configure_logging
 from .misc import create_directory_if_not_exists
 from .misc import get_current_file_abs_directory
@@ -89,4 +90,5 @@ __all__ = [
     "validate_file_head_crc32",
     "Crc32InFileHeadDoesNotMatchExpectedValueError",
     "Crc32ChecksumValidationFailureError",
+    "UnrecognizedLoggingFormatError",
 ]
