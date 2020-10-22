@@ -58,5 +58,7 @@ def configure_logging(
     else:
         raise UnrecognizedLoggingFormatError(logging_format)
     logging.basicConfig(
-        level=log_level, format=config_format, handlers=handlers,
+        level=log_level,
+        format=config_format,
+        handlers=handlers,
     )

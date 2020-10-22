@@ -62,7 +62,10 @@ def test_InfiniteLoopingParallelismMixIn__does_not_sleep_during_loop_if_minimum_
 ):
 
     mocker.patch.object(
-        time, "perf_counter_ns", autospec=True, side_effect=[0, 0, 0.1 * 10 ** 9, 0],
+        time,
+        "perf_counter_ns",
+        autospec=True,
+        side_effect=[0, 0, 0.1 * 10 ** 9, 0],
     )
     mocked_sleep = mocker.patch.object(time, "sleep", autospec=True)
     generic_infinite_looper().run(num_iterations=2, perform_setup_before_loop=False)
@@ -154,7 +157,10 @@ def test_InfiniteLoopingParallelismMixIn__get_start_timepoint_of_performance_mea
 ):
     expected_timepoint = 123554
     mocker.patch.object(
-        time, "perf_counter_ns", autospec=True, side_effect=[expected_timepoint],
+        time,
+        "perf_counter_ns",
+        autospec=True,
+        side_effect=[expected_timepoint],
     )
 
     p = generic_infinite_looper()
