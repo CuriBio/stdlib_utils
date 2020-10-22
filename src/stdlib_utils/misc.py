@@ -59,10 +59,8 @@ def resource_path(relative_path: str, base_path: Optional[str] = None) -> str:
     For use specifically with files compiled to windows EXE by pyinstaller.
     """
     if base_path is None:
-        path_to_file_that_called_this_function = os.path.dirname(  # pylint: disable=invalid-name
-            (inspect.stack()[1][1])
-        )
-        base_path = path_to_file_that_called_this_function
+        path_to_file_calling_function = os.path.dirname((inspect.stack()[1][1]))
+        base_path = path_to_file_calling_function
     if base_path == "":
         raise BlankAbsoluteResourcePathError()
     if is_frozen_as_exe():

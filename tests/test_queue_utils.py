@@ -8,6 +8,9 @@ import pytest
 from stdlib_utils import drain_queue
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
+from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
+from stdlib_utils import queue_utils
+from stdlib_utils import QueueStillEmptyError
 from stdlib_utils import safe_get
 from stdlib_utils import SimpleMultiprocessingQueue
 
@@ -58,6 +61,21 @@ def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue
     assert mocked_empty.call_count > 10
 
 
+def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue__after_kwarg_timeout_is_met(
+    mocker,
+):
+    q = queue.Queue()
+    mocked_empty = mocker.patch.object(q, "empty", autospec=True, return_value=False)
+    mocker.patch.object(
+        queue_utils,
+        "process_time",
+        autospec=True,
+        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4],
+    )
+    assert is_queue_eventually_empty(q, timeout_seconds=0.36) is False
+    assert mocked_empty.call_count == 5
+
+
 def test_is_queue_eventually_empty__returns_true_after_multiple_attempts_with_eventually_empty_threading_queue(
     mocker,
 ):
@@ -94,6 +112,18 @@ def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue
     spied_empty = mocker.spy(q, "empty")
     assert is_queue_eventually_not_empty(q) is False
     assert spied_empty.call_count > 10
+
+
+def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue__after_kwarg_timeout_is_met(
+    mocker,
+):
+    q = queue.Queue()
+    spied_empty = mocker.spy(q, "empty")
+    mocker.patch.object(
+        queue_utils, "process_time", autospec=True, side_effect=[0, 0.1, 0.15, 0.2, 0.3]
+    )
+    assert is_queue_eventually_not_empty(q, timeout_seconds=0.25) is False
+    assert spied_empty.call_count == 3
 
 
 def test_is_queue_eventually_not_empty__returns_true_after_multiple_attempts_with_eventually_not_empty_threading_queue(
@@ -134,3 +164,32 @@ def test_drain_queue__returns_list_of_expected_items__and_ignores_None_objects()
 
     actual = drain_queue(q)
     assert actual == expected_items
+
+
+def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__puts_object_into_queue():
+    expected = "bob"
+    q = Queue()
+    put_object_into_queue_and_raise_error_if_eventually_still_empty(expected, q)
+    actual = q.get_nowait()
+    assert actual == expected
+
+
+def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__raises_error_if_queue_not_populated(
+    mocker,
+):
+    q = Queue()
+    mocker.patch.object(q, "put", autospec=True)
+    with pytest.raises(QueueStillEmptyError):
+        put_object_into_queue_and_raise_error_if_eventually_still_empty("bill", q)
+
+
+def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__passes_timeout_kwarg_to_subfunction(
+    mocker,
+):
+    expected = 2.2
+    q = Queue()
+    spied_not_empty = mocker.spy(queue_utils, "is_queue_eventually_not_empty")
+    put_object_into_queue_and_raise_error_if_eventually_still_empty(
+        "bill", q, timeout_seconds=expected
+    )
+    spied_not_empty.assert_called_once_with(q, timeout_seconds=expected)

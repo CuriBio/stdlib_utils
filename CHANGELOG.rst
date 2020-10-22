@@ -1,6 +1,14 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.2 (10-22-20)
+------------------
+
+- Added kwarg for is_queue_eventually_empty and is_queue_eventually_empty for timeout
+
+- Added put_object_into_queue_and_raise_error_if_eventually_still_empty helper function for unit testing
+
+
 0.3.1 (09-17-20)
 ------------------
 
