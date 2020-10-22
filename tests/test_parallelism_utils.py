@@ -120,7 +120,11 @@ def test_put_log_message_into_queue__sleeps_after_putting_message_into_regular_q
     q = queue.Queue()
     msg = "hey there"
     put_log_message_into_queue(
-        logging.ERROR, msg, q, logging.WARNING, pause_after_put=True,
+        logging.ERROR,
+        msg,
+        q,
+        logging.WARNING,
+        pause_after_put=True,
     )
     spied_is_queue_eventually_not_empty.assert_called_once_with(q)
 
@@ -132,7 +136,11 @@ def test_put_log_message_into_queue__does_not_sleep_after_putting_message_into_s
     sq = SimpleMultiprocessingQueue()
     msg = "hey there"
     put_log_message_into_queue(
-        logging.ERROR, msg, sq, logging.WARNING, pause_after_put=True,
+        logging.ERROR,
+        msg,
+        sq,
+        logging.WARNING,
+        pause_after_put=True,
     )
     spied_sleep.assert_not_called()
 

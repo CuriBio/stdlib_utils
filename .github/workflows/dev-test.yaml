@@ -12,7 +12,7 @@ on:
     - cron: '0 5 * * *'
   push:
     branches:
-      - master
+      - main
       - development
   pull_request:
 
@@ -32,14 +32,8 @@ jobs:
           # only enable coverage on the fastest job
           - os: "ubuntu-18.04"
             python-version: "3.7"
-            ENABLE_CODE_COVERAGE: true
             IS_FASTEST_JOB: true
-          - os: "ubuntu-18.04"
-            IS_LINUX: true
-          - os: "windows-2019"
-            IS_WINDOWS: true
-    env:
-      ENABLE_CODE_COVERAGE: ${{ matrix.ENABLE_CODE_COVERAGE }}
+
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -57,11 +51,22 @@ jobs:
           python -c "import sys; print(sys.version)"
           python -m venv venv
 
+      - name: Cache Pre-commit hooks
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-pre-commit-hooks
+        if: matrix.IS_FASTEST_JOB == true
+        with:
+          path: ./.precommit_cache
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-build-${{ env.cache-name }}-${{ hashFiles('**/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-build-${{ env.cache-name }}-
+
       - name: Activate virtual environment (Linux/MacOS)
-        if: matrix.IS_LINUX == true
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         run: . venv/bin/activate
       - name: Activate virtual environment (Windows)
-        if: matrix.IS_WINDOWS == true
+        if: runner.os == 'Windows'
         run: venv\Scripts\Activate.ps1
 
       - name: Display Pip Version and confirm environment empty
@@ -78,6 +83,8 @@ jobs:
 
       - name: Run pre-commit hooks
         if: matrix.IS_FASTEST_JOB == true
+        env:
+          PRE_COMMIT_HOME: ./.precommit_cache
         # only enable pre-commit on the fastest job
         run: |
           pre-commit install
@@ -89,7 +96,14 @@ jobs:
 
       - name: Run Tests with supplied pytest-randomly seed
         if: github.event.inputs.randomlyseed != ''
-        run: pytest -xsvv --cov-report=xml --randomly-seed=${{ github.event.inputs.randomlyseed }} --full-ci --include-slow-tests
+        run: pytest -xsvv --cov-report=xml --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}
+
+      - name: Archive Pytest Code Coverage if failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: pytest-coverage-report--${{ matrix.os }}--${{ matrix.python-version }}
+          path: "coverage-report-pytest/**/*"
 
       - name: Confirm Sphinx Docs build correctly
         # only check Sphinx docs build on the fastest job
@@ -111,4 +125,4 @@ jobs:
 
       - name: Run prerelease to check packaging compatibilty
         if: matrix.IS_FASTEST_JOB == true
-        run: python3 prerelease.py --no-input
+        run: python prerelease.py --no-input
