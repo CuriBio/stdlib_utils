@@ -11,7 +11,7 @@ import multiprocessing.queues
 import queue
 from queue import Empty
 from queue import Queue
-import time
+from time import process_time
 from typing import Any
 from typing import List
 from typing import Union
@@ -27,10 +27,11 @@ def _eventually_empty(
             Any
         ],
     ],
+    timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Help to determine if queue is eventually empty or not."""
-    start_time = time.process_time()
-    while time.process_time() - start_time < 0.2:
+    start_time = process_time()
+    while process_time() - start_time < timeout_seconds:
         is_empty = the_queue.empty()
         value_to_check = is_empty
         if not should_be_empty:
@@ -48,10 +49,11 @@ def is_queue_eventually_empty(
         multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
             Any
         ],
-    ]
+    ],
+    timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Check if queue is empty prior to timeout occurring."""
-    return _eventually_empty(True, the_queue)
+    return _eventually_empty(True, the_queue, timeout_seconds=timeout_seconds)
 
 
 def is_queue_eventually_not_empty(
@@ -62,10 +64,11 @@ def is_queue_eventually_not_empty(
         multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
             Any
         ],
-    ]
+    ],
+    timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Check if queue is not empty prior to timeout occurring."""
-    return _eventually_empty(False, the_queue)
+    return _eventually_empty(False, the_queue, timeout_seconds=timeout_seconds)
 
 
 def safe_get(the_queue: Queue[Any]) -> Any:  # pylint: disable=unsubscriptable-object

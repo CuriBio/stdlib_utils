@@ -5,6 +5,7 @@ from . import loggers
 from . import misc
 from . import parallelism_utils
 from . import ports
+from . import queue_utils
 from .checksum import compute_crc32_and_write_to_file_head
 from .checksum import compute_crc32_bytes_of_large_file
 from .checksum import compute_crc32_hex_of_large_file
@@ -43,8 +44,6 @@ from .queue_utils import safe_get
 from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
 from .xml import find_exactly_one_xml_element
-
-# from .misc import raise_alarm_signal
 
 __all__ = [
     "configure_logging",
@@ -91,4 +90,5 @@ __all__ = [
     "Crc32InFileHeadDoesNotMatchExpectedValueError",
     "Crc32ChecksumValidationFailureError",
     "UnrecognizedLoggingFormatError",
+    "queue_utils",
 ]
