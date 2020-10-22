@@ -2,6 +2,11 @@
 .idea/
 .~c9*
 
+# CI caches
+.npm_cache/
+.precommit_cache/
+.pipenv_cache/
+
 # Python
 *.py[cod]
 __pycache__/
@@ -22,6 +27,9 @@ docs/build
 tests/**/snapshots/*_actual.png
 tests/**/snapshots/*_diff.png
 
+dist/
+build/
+
 # test coverage
 tests/__coverage__
 test/__coverage__
@@ -30,6 +38,7 @@ coverage-report-pytest
 .mypy_cache/
 .coverage
 .coverage.*
+coverage.xml
 
 # test profiling
 prof/
@@ -42,7 +51,5 @@ pipeline_outputs/
 *.tsv
 *.csv
 
-# logs
-logs/
 
 secrets.json
