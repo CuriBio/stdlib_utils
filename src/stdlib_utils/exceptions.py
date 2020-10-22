@@ -57,3 +57,10 @@ class Crc32InFileHeadDoesNotMatchExpectedValueError(Exception):
 
 class Crc32ChecksumValidationFailureError(Exception):
     pass
+
+
+class QueueStillEmptyError(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            "The queue was still empty even after waiting for a period after the queue.put operation to complete."
+        )

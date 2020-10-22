@@ -16,6 +16,8 @@ from typing import Any
 from typing import List
 from typing import Union
 
+from .exceptions import QueueStillEmptyError
+
 
 def _eventually_empty(
     should_be_empty: bool,
@@ -69,6 +71,28 @@ def is_queue_eventually_not_empty(
 ) -> bool:
     """Check if queue is not empty prior to timeout occurring."""
     return _eventually_empty(False, the_queue, timeout_seconds=timeout_seconds)
+
+
+def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: disable=invalid-name # Eli (10/22/20): I know this is long, but it's a combined helper function for unit testing
+    obj: object,
+    the_queue: Union[
+        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Any
+        ],
+        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Any
+        ],
+    ],
+    timeout_seconds: Union[float, int] = 0.2,
+) -> None:
+    """Put an object into a queue and wait until queue is populated.
+
+    Raises an error if queue is still empty and the end of
+    timeout_seconds. This is primarily/exclusively used in unit testing.
+    """
+    the_queue.put(obj)
+    if not is_queue_eventually_not_empty(the_queue, timeout_seconds=timeout_seconds):
+        raise QueueStillEmptyError()
 
 
 def safe_get(the_queue: Queue[Any]) -> Any:  # pylint: disable=unsubscriptable-object

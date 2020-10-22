@@ -19,6 +19,7 @@ from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
+from .exceptions import QueueStillEmptyError
 from .exceptions import UnrecognizedLoggingFormatError
 from .loggers import configure_logging
 from .misc import create_directory_if_not_exists
@@ -40,6 +41,7 @@ from .ports import is_port_in_use
 from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
 from .queue_utils import safe_get
 from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
@@ -68,6 +70,8 @@ __all__ = [
     "confirm_port_available",
     "is_queue_eventually_empty",
     "is_queue_eventually_not_empty",
+    "put_object_into_queue_and_raise_error_if_eventually_still_empty",
+    "QueueStillEmptyError",
     "is_port_in_use",
     "PortUnavailableError",
     "PortNotInUseError",
