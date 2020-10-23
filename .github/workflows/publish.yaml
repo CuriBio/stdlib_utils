@@ -281,7 +281,7 @@ jobs:
           pip install -e .
 
       - name: Confirm no import errors when opening package
-        run: python -c "import ${{ steps.extract_package_name.outputs.package-name }}"
+        run: python -c "import ${{ steps.extract_package_info.outputs.package-name }}"
 
       - name: Install Dev Dependencies
         run: pip install -r requirements-dev.txt
@@ -426,7 +426,7 @@ jobs:
           pip install -e .
 
       - name: Confirm no import errors when opening package
-        run: python -c "import ${{ steps.extract_package_name.outputs.package-name }}"
+        run: python -c "import ${{ steps.extract_package_info.outputs.package-name }}"
 
       - name: Install Dev Dependencies
         run: pip install -r requirements-dev.txt
