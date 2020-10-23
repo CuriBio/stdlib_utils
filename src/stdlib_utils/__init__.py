@@ -41,6 +41,7 @@ from .ports import is_port_in_use
 from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
+from .queue_utils import is_queue_eventually_of_size
 from .queue_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
 from .queue_utils import safe_get
 from .queue_utils import SimpleMultiprocessingQueue
@@ -95,4 +96,5 @@ __all__ = [
     "Crc32ChecksumValidationFailureError",
     "UnrecognizedLoggingFormatError",
     "queue_utils",
+    "is_queue_eventually_of_size",
 ]

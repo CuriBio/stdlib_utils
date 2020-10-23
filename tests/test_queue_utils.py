@@ -2,17 +2,29 @@
 import multiprocessing
 import queue
 from queue import Queue
+import sys
 import time
 
 import pytest
 from stdlib_utils import drain_queue
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
+from stdlib_utils import is_queue_eventually_of_size
 from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
 from stdlib_utils import queue_utils
 from stdlib_utils import QueueStillEmptyError
 from stdlib_utils import safe_get
 from stdlib_utils import SimpleMultiprocessingQueue
+
+# Eli (10/23/20): had to drop support for MacOS because they don't adequately support Multiprocessing queues yet
+#     def qsize(self):
+#         # Raises NotImplementedError on Mac OSX because of broken sem_getvalue()
+# >       return self._maxsize - self._sem._semlock._get_value()
+# ./../../hostedtoolcache/Python/3.8.6/x64/lib/python3.8/multiprocessing/queues.py:120: NotImplementedError
+skip_on_mac = pytest.mark.skipif(
+    sys.platform.startswith("darwin"),
+    reason="the queue.qsize method is Not Implemented on MacOS",
+)
 
 
 def test_SimpleMultiprocessingQueue__get_nowait__returns_value_if_present():
@@ -36,6 +48,112 @@ def test_SimpleMultiprocessingQueue__get_nowait__raises_error_if_empty():
     test_queue = SimpleMultiprocessingQueue()
     with pytest.raises(queue.Empty):
         test_queue.get_nowait()
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_size", "expected", "test_description")),
+    [
+        (
+            queue.Queue(),
+            0,
+            True,
+            "given_empty_threading_queue__when_called_with_zero__returns_true",
+        ),
+        (
+            multiprocessing.Queue(),
+            0,
+            True,
+            "Given empty multiprocessing queue, When called with zero, Then it returns true",
+        ),
+        (
+            queue.Queue(),
+            0,
+            True,
+            "Given empty threading queue, When called with 1, Then it returns false",
+        ),
+        (
+            multiprocessing.Queue(),
+            0,
+            True,
+            "Given empty multiprocessing queue, When called with 1, Then it returns false",
+        ),
+    ],
+)
+@skip_on_mac
+def test_is_queue_eventually_of_size(test_queue, test_size, expected, test_description):
+    assert is_queue_eventually_of_size(test_queue, test_size) is expected
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+@skip_on_mac
+def test_is_queue_eventually_of_size__given_populated_queue__when_caled_with_zero__then_it_returns_false(
+    test_queue, test_description
+):
+    test_queue.put("bob")
+    assert is_queue_eventually_of_size(test_queue, 0) is False
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+@skip_on_mac
+def test_is_queue_eventually_of_size__given_populated_queue__when_caled_with_one__then_it_returns_true(
+    test_queue, test_description
+):
+    test_queue.put("bob")
+    assert is_queue_eventually_of_size(test_queue, 1) is True
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_is_queue_eventually_of_size__given_empty_queue_that_has_qsize_mocked__when_called_with_1__returns_true_after_several_calls(
+    test_queue, test_description, mocker
+):
+    mocked_qsize = mocker.patch.object(
+        test_queue, "qsize", autospec=True, side_effect=[0, 0, 0, 1]
+    )
+    assert is_queue_eventually_of_size(test_queue, 1) is True
+    assert mocked_qsize.call_count == 4
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_is_queue_eventually_of_size__given_empty_queue__when_called_with_1__returns_false_after_kwarg_timeout_is_met(
+    test_queue,
+    test_description,
+    mocker,
+):
+    mocked_qsize = mocker.patch.object(
+        test_queue, "qsize", autospec=True, return_value=0
+    )  # Eli (10/23/20: Mocking instead of spying on qsize so that this can be run on a Mac to check code coverage. As of today, MacOS has not implemented qsize().
+    mocker.patch.object(
+        queue_utils,
+        "process_time",
+        autospec=True,
+        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.45],
+    )
+    assert is_queue_eventually_of_size(test_queue, 1, timeout_seconds=0.41) is False
+    assert mocked_qsize.call_count == 6
 
 
 def test_is_queue_eventually_empty__returns_true_with_empty_threading_queue():
