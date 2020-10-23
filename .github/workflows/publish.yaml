@@ -273,7 +273,9 @@ jobs:
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
-        run: pip install -e .
+        run: |
+          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_name.outputs.package-name }}
+          pip install -e .
 
       - name: Confirm no import errors when opening package
         run: python -c "import ${{ steps.extract_package_name.outputs.package-name }}"
@@ -414,7 +416,9 @@ jobs:
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
-        run: pip install -e .
+        run: |
+          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_name.outputs.package-name }}
+          pip install -e .
 
       - name: Confirm no import errors when opening package
         run: python -c "import ${{ steps.extract_package_name.outputs.package-name }}"
