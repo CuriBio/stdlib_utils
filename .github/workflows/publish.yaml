@@ -262,7 +262,7 @@ jobs:
       # TODO (Eli 10/23/20): likely need to figure out a windows-compatible version of doing this
       - name: Extract package name # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-name;]$(echo $(grep -Po "(?<=    name=\")\w+" setup.py))'
+        run: echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_name.py))'
         id: extract_package_name
 
       - name: Install Main Package From Test PyPI
@@ -402,7 +402,7 @@ jobs:
       # TODO (Eli 10/23/20): likely need to figure out a windows-compatible version of doing this
       - name: Extract package name # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-name;]$(echo $(grep -Po "(?<=    name=\")\w+" setup.py))'
+        run: echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_name.py))'
         id: extract_package_name
 
 
