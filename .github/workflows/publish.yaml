@@ -50,7 +50,7 @@ jobs:
 
       - name: Extract version number # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-version;]$(echo $(grep -Po "(?<=    version=\")[0-9.]+" setup.py))'
+        run: echo '##[set-output name=package-version;]$(echo $(python .github/workflows/extract_package_info.py package_version)'
         id: extract_version
 
       - name: Confirming tag not already present on remote (if publishing)
@@ -259,22 +259,25 @@ jobs:
           pip -V
           pip freeze
 
-      # TODO (Eli 10/23/20): likely need to figure out a windows-compatible version of doing this
-      - name: Extract package name # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
+      - name: Extract package info # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_name.py))'
-        id: extract_package_name
+        run: |
+          echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_info.py package_name))'
+          echo '##[set-output name=package-version;]$(echo $(python .github/workflows/extract_package_info.py package_version))'
+        id: extract_package_info
 
       - name: Install Main Package From Test PyPI
         if: github.event.inputs.publish_to_pypi == '1'
         run: |
-          echo Extracted package name: ${{ steps.extract_package_name.outputs.package-name }}
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ${{ steps.extract_package_name.outputs.package-name }}
+          echo Extracted package name: ${{ steps.extract_package_info.outputs.package-name }}
+          echo Extracted package version: ${{ steps.extract_package_info.outputs.package-version }}
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ${{ steps.extract_package_info.outputs.package-name }}==${{ steps.extract_package_info.outputs.package-version }}
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
         run: |
-          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_name.outputs.package-name }}
+          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_info.outputs.package-name }}
+          echo Extracted package version that would have been used when publishing: ${{ steps.extract_package_info.outputs.package-version }}
           pip install -e .
 
       - name: Confirm no import errors when opening package
@@ -401,28 +404,29 @@ jobs:
           pip -V
           pip freeze
 
-      # TODO (Eli 10/23/20): likely need to figure out a windows-compatible version of doing this
-      - name: Extract package name # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
+      - name: Extract package info # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_name.py))'
-        id: extract_package_name
-
+        run: |
+          echo '##[set-output name=package-name;]$(echo $(python .github/workflows/extract_package_info.py package_name))'
+          echo '##[set-output name=package-version;]$(echo $(python .github/workflows/extract_package_info.py package_version))'
+        id: extract_package_info
 
       - name: Install Main Package From PyPI
         if: github.event.inputs.publish_to_pypi == '1'
         run: |
-          echo Extracted package name: ${{ steps.extract_package_name.outputs.package-name }}
-          pip install ${{ steps.extract_package_name.outputs.package-name }}
+          echo Extracted package name: ${{ steps.extract_package_info.outputs.package-name }}
+          echo Extracted package version: ${{ steps.extract_package_info.outputs.package-version }}
+          pip install ${{ steps.extract_package_info.outputs.package-name }}==${{ steps.extract_package_info.outputs.package-version }}
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
         run: |
-          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_name.outputs.package-name }}
+          echo Extracted package name that would have been used when publishing: ${{ steps.extract_package_info.outputs.package-name }}
+          echo Extracted package version that would have been used when publishing: ${{ steps.extract_package_info.outputs.package-version }}
           pip install -e .
 
       - name: Confirm no import errors when opening package
         run: python -c "import ${{ steps.extract_package_name.outputs.package-name }}"
-
 
       - name: Install Dev Dependencies
         run: pip install -r requirements-dev.txt
