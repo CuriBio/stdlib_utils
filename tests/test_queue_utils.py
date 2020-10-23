@@ -121,7 +121,6 @@ def test_is_queue_eventually_of_size__given_populated_queue__when_caled_with_one
         (multiprocessing.Queue(), "multiprocessing queue"),
     ],
 )
-@skip_on_mac
 def test_is_queue_eventually_of_size__given_empty_queue_that_has_qsize_mocked__when_called_with_1__returns_true_after_several_calls(
     test_queue, test_description, mocker
 ):
@@ -139,13 +138,14 @@ def test_is_queue_eventually_of_size__given_empty_queue_that_has_qsize_mocked__w
         (multiprocessing.Queue(), "multiprocessing queue"),
     ],
 )
-@skip_on_mac
 def test_is_queue_eventually_of_size__given_empty_queue__when_called_with_1__returns_false_after_kwarg_timeout_is_met(
     test_queue,
     test_description,
     mocker,
 ):
-    spied_qsize = mocker.spy(test_queue, "qsize")
+    mocked_qsize = mocker.patch.object(
+        test_queue, "qsize", autospec=True, return_value=0
+    )  # Eli (10/23/20: Mocking instead of spying on qsize so that this can be run on a Mac to check code coverage. As of today, MacOS has not implemented qsize().
     mocker.patch.object(
         queue_utils,
         "process_time",
@@ -153,7 +153,7 @@ def test_is_queue_eventually_of_size__given_empty_queue__when_called_with_1__ret
         side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.45],
     )
     assert is_queue_eventually_of_size(test_queue, 1, timeout_seconds=0.41) is False
-    assert spied_qsize.call_count == 6
+    assert mocked_qsize.call_count == 6
 
 
 def test_is_queue_eventually_empty__returns_true_with_empty_threading_queue():
