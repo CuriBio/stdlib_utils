@@ -1,6 +1,12 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.3 (10-23-20)
+------------------
+
+- Added is_queue_eventually_of_size. Note, this is currently not supported on MacOS because MacOS does not implement queue.qsize()
+
+
 0.3.2 (10-22-20)
 ------------------
 

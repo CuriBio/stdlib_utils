@@ -73,6 +73,31 @@ def is_queue_eventually_not_empty(
     return _eventually_empty(False, the_queue, timeout_seconds=timeout_seconds)
 
 
+def is_queue_eventually_of_size(
+    the_queue: Union[
+        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Any
+        ],
+        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
+            Any
+        ],
+    ],
+    size: int,
+    timeout_seconds: Union[float, int] = 0.2,
+) -> bool:
+    """Check if queue is a certain size prior to timeout occurring.
+
+    Typically used in unit testing to ensure that a put or get operation
+    has fully completed during test setup before triggering the function
+    being tested.
+    """
+    start_time = process_time()
+    while process_time() - start_time < timeout_seconds:
+        if the_queue.qsize() == size:
+            return True
+    return False
+
+
 def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: disable=invalid-name # Eli (10/22/20): I know this is long, but it's a combined helper function for unit testing
     obj: object,
     the_queue: Union[
