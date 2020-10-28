@@ -31,7 +31,7 @@ jobs:
             python-version: "3.7"
             IS_FASTEST_JOB: true
 
-    name: Test code in Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Test code befoer publishing in Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -50,8 +50,13 @@ jobs:
 
       - name: Extract version number # Adapted from: https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions
         shell: bash
-        run: echo '##[set-output name=package-version;]$(echo $(python .github/workflows/extract_package_info.py package_version)'
+        run: echo '##[set-output name=package-version;]$(echo $(python .github/workflows/extract_package_info.py package_version))'
         id: extract_version
+
+      - name: Display extracted version number
+        shell: bash
+        run: |
+          echo "Version: ${{ steps.extract_version.outputs.package-version }}"
 
       - name: Confirming tag not already present on remote (if publishing)
         if: github.event.inputs.publish_to_pypi == '1' && matrix.IS_FASTEST_JOB == true
@@ -151,17 +156,18 @@ jobs:
           path: dist/*
 
 
-# TODO (Eli 10/22/20): add step to publish to PyPi Test server and test installation before publishing to PyPi
-# TODO (Eli 10/22/20): add step to install package from PyPi (and test PyPi first) and confirm that at least it can be imported in Python without an error
   publish_to_test_pypi:
     needs: [test]
     strategy:
       fail-fast: false
       matrix:
-        os:
+        os: # if publishing pure python code, then disable all except one os and python version combination. But if publishing code that uses Cython then likely all combinations will be needed
           - "ubuntu-18.04"
+          - "windows-2019"
+          - "macos-10.15"
         python-version:
             - 3.7
+            - 3.8
     name: Publish to Test PyPI for Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -211,11 +217,11 @@ jobs:
 
         run: twine upload --repository testpypi dist/*
 
-      - name: Sleep for 75 seconds to allow Test PyPI Index to update before proceeding to the next step
+      - name: Sleep for 360 seconds to allow Test PyPI Index to update before proceeding to the next step
         if: github.event.inputs.publish_to_pypi == '1'
         uses: juliangruber/sleep-action@v1
         with:
-          time: 75s
+          time: 360s
 
   install_from_test_pypi:
     needs: [publish_to_test_pypi]
@@ -268,10 +274,7 @@ jobs:
 
       - name: Install Main Package From Test PyPI
         if: github.event.inputs.publish_to_pypi == '1'
-        run: |
-          echo Extracted package name: ${{ steps.extract_package_info.outputs.package-name }}
-          echo Extracted package version: ${{ steps.extract_package_info.outputs.package-version }}
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ${{ steps.extract_package_info.outputs.package-name }}==${{ steps.extract_package_info.outputs.package-version }}
+        run: python .github/workflows/extract_package_info.py install_from_test_pypi
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
@@ -291,21 +294,24 @@ jobs:
 
       - name: Run Tests with randomly generated seed
         if: github.event.inputs.randomlyseed == ''
-        run: pytest -xsvv --full-ci --include-slow-tests
+        run: pytest -xsvv --full-ci --include-slow-tests --cov-fail-under=0
 
       - name: Run Tests with supplied pytest-randomly seed
         if: github.event.inputs.randomlyseed != ''
-        run: pytest -xsvv --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}
+        run: pytest -xsvv --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}--cov-fail-under=0
 
   publish_to_pypi:
     needs: [install_from_test_pypi]
     strategy:
       fail-fast: false
       matrix:
-        os:
+        os: # if publishing pure python code, then disable all except one os and python version combination. But if publishing code that uses Cython then likely all combinations will be needed
           - "ubuntu-18.04"
+          - "windows-2019"
+          - "macos-10.15"
         python-version:
             - 3.7
+            - 3.8
     name: Publish to PyPI for Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -355,11 +361,11 @@ jobs:
 
         run: twine upload dist/*
 
-      - name: Sleep for 75 seconds to allow PyPI Index to update before proceeding to the next step
+      - name: Sleep for 360 seconds to allow PyPI Index to update before proceeding to the next step
         if: github.event.inputs.publish_to_pypi == '1'
         uses: juliangruber/sleep-action@v1
         with:
-          time: 75s
+          time: 360s
 
 
   install_from_pypi:
@@ -413,10 +419,7 @@ jobs:
 
       - name: Install Main Package From PyPI
         if: github.event.inputs.publish_to_pypi == '1'
-        run: |
-          echo Extracted package name: ${{ steps.extract_package_info.outputs.package-name }}
-          echo Extracted package version: ${{ steps.extract_package_info.outputs.package-version }}
-          pip install ${{ steps.extract_package_info.outputs.package-name }}==${{ steps.extract_package_info.outputs.package-version }}
+        run: python .github/workflows/extract_package_info.py install_from_pypi
 
       - name: Install Main Package From Local repo as test since not publishing to PyPI
         if: github.event.inputs.publish_to_pypi != '1'
@@ -436,11 +439,11 @@ jobs:
 
       - name: Run Tests with randomly generated seed
         if: github.event.inputs.randomlyseed == ''
-        run: pytest -xsvv --full-ci --include-slow-tests
+        run: pytest -xsvv --full-ci --include-slow-tests --cov-fail-under=0
 
       - name: Run Tests with supplied pytest-randomly seed
         if: github.event.inputs.randomlyseed != ''
-        run: pytest -xsvv --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}
+        run: pytest -xsvv --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }} --cov-fail-under=0
 
   create_tag:
     needs: [install_from_pypi]

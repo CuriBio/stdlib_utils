@@ -87,7 +87,7 @@ repos:
         exclude: docs
 
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.6.0  # pick a git hash / tag to point to
+    rev: v1.7.0  # pick a git hash / tag to point to
     hooks:
     -   id: python-check-blanket-noqa
     -   id: python-check-mock-methods
