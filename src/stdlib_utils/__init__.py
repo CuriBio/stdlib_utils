@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper utilities only requiring the standard library."""
+from __future__ import annotations
+
 from . import checksum
 from . import loggers
 from . import misc
@@ -11,6 +13,7 @@ from .checksum import compute_crc32_bytes_of_large_file
 from .checksum import compute_crc32_hex_of_large_file
 from .checksum import validate_file_head_crc32
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+from .constants import UnionOfThreadingAndMultiprocessingQueue
 from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import Crc32ChecksumValidationFailureError
 from .exceptions import Crc32InFileHeadDoesNotMatchExpectedValueError
@@ -20,6 +23,7 @@ from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
+from .exceptions import QueueNotExpectedSizeError
 from .exceptions import QueueStillEmptyError
 from .exceptions import UnrecognizedLoggingFormatError
 from .loggers import configure_logging
@@ -39,6 +43,7 @@ from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
+from .queue_utils import confirm_queue_is_eventually_of_size
 from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
 from .queue_utils import is_queue_eventually_not_empty
@@ -99,4 +104,7 @@ __all__ = [
     "queue_utils",
     "is_queue_eventually_of_size",
     "SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE",
+    "confirm_queue_is_eventually_of_size",
+    "QueueNotExpectedSizeError",
+    "UnionOfThreadingAndMultiprocessingQueue",
 ]

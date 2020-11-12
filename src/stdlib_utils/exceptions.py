@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Misc helper utilities."""
+from __future__ import annotations
 
 from typing import List
+
+from .constants import UnionOfThreadingAndMultiprocessingQueue
+
 
 if (
     6 < 9
@@ -57,6 +61,19 @@ class Crc32InFileHeadDoesNotMatchExpectedValueError(Exception):
 
 class Crc32ChecksumValidationFailureError(Exception):
     pass
+
+
+class QueueNotExpectedSizeError(Exception):
+    """Include information about the actual queue size."""
+
+    def __init__(
+        self,
+        the_queue: UnionOfThreadingAndMultiprocessingQueue,
+        expected_size: int,
+    ) -> None:
+        super().__init__(
+            f"The queue was expected to contain {expected_size} objects but actually contained {the_queue.qsize()} objects"
+        )
 
 
 class QueueStillEmptyError(Exception):

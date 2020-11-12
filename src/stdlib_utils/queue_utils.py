@@ -18,19 +18,14 @@ from typing import List
 from typing import Union
 
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+from .constants import UnionOfThreadingAndMultiprocessingQueue
+from .exceptions import QueueNotExpectedSizeError
 from .exceptions import QueueStillEmptyError
 
 
 def _eventually_empty(
     should_be_empty: bool,
-    the_queue: Union[
-        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-    ],
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
     timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Help to determine if queue is eventually empty or not."""
@@ -51,14 +46,7 @@ def _eventually_empty(
 
 
 def is_queue_eventually_empty(
-    the_queue: Union[
-        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-    ],
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
     timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Check if queue is empty prior to timeout occurring."""
@@ -66,14 +54,7 @@ def is_queue_eventually_empty(
 
 
 def is_queue_eventually_not_empty(
-    the_queue: Union[
-        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-    ],
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
     timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
     """Check if queue is not empty prior to timeout occurring."""
@@ -81,14 +62,7 @@ def is_queue_eventually_not_empty(
 
 
 def is_queue_eventually_of_size(
-    the_queue: Union[
-        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-    ],
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
     size: int,
     timeout_seconds: Union[float, int] = 0.2,
 ) -> bool:
@@ -110,16 +84,25 @@ def is_queue_eventually_of_size(
     return False
 
 
+def confirm_queue_is_eventually_of_size(
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
+    size: int,
+    timeout_seconds: Union[float, int] = 0.2,
+) -> None:
+    """Raise exception if queue is not a certain size prior to timeout.
+
+    Typically used in unit testing to ensure that a put or get operation
+    has fully completed during test setup before triggering the function
+    being tested.
+    """
+    if is_queue_eventually_of_size(the_queue, size, timeout_seconds=timeout_seconds):
+        return
+    raise QueueNotExpectedSizeError(the_queue, size)
+
+
 def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: disable=invalid-name # Eli (10/22/20): I know this is long, but it's a combined helper function for unit testing
     obj: object,
-    the_queue: Union[
-        Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-        multiprocessing.queues.Queue[  # pylint: disable=unsubscriptable-object # Eli (3/12/20) not sure why pylint doesn't recognize this type annotation
-            Any
-        ],
-    ],
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
     timeout_seconds: Union[float, int] = 0.2,
 ) -> None:
     """Put an object into a queue and wait until queue is populated.

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper utilities for logging."""
+from __future__ import annotations
+
 import datetime
 import logging
 import os
