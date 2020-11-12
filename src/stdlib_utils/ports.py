@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utilities for dealing with ports/sockets."""
+from __future__ import annotations
+
 import socket
 import time
 from typing import Union

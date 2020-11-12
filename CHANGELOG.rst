@@ -1,6 +1,14 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.6 (11-12-20)
+------------------
+
+- Added confirm_queue_is_eventually_of_size. Note, this is currently not supported on MacOS because MacOS does not implement queue.qsize()
+
+- Added 50 msec delay between polling to check if queue was empty or checking qsize.
+
+
 0.3.5 (10-23-20)
 ------------------
 

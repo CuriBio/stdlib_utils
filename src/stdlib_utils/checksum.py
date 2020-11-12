@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Functions for calculating, embedding, and validating checksums."""
+from __future__ import annotations
+
 import struct
 from typing import IO
 from typing import Optional

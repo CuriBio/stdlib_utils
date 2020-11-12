@@ -6,14 +6,17 @@ import sys
 import time
 
 import pytest
+from stdlib_utils import confirm_queue_is_eventually_of_size
 from stdlib_utils import drain_queue
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import is_queue_eventually_of_size
 from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
 from stdlib_utils import queue_utils
+from stdlib_utils import QueueNotExpectedSizeError
 from stdlib_utils import QueueStillEmptyError
 from stdlib_utils import safe_get
+from stdlib_utils import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from stdlib_utils import SimpleMultiprocessingQueue
 
 # Eli (10/23/20): had to drop support for MacOS because they don't adequately support Multiprocessing queues yet
@@ -150,7 +153,16 @@ def test_is_queue_eventually_of_size__given_empty_queue__when_called_with_1__ret
         queue_utils,
         "process_time",
         autospec=True,
-        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.45],
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+            0.35 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 4,
+            0.4 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 5,
+            0.45 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 6,
+        ],
     )
     assert is_queue_eventually_of_size(test_queue, 1, timeout_seconds=0.41) is False
     assert mocked_qsize.call_count == 6
@@ -175,8 +187,13 @@ def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue
 ):
     q = queue.Queue()
     mocked_empty = mocker.patch.object(q, "empty", autospec=True, return_value=False)
-    assert is_queue_eventually_empty(q) is False
-    assert mocked_empty.call_count > 10
+    assert (
+        is_queue_eventually_empty(
+            q, timeout_seconds=SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 6
+        )
+        is False
+    )
+    assert mocked_empty.call_count > 5
 
 
 def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue__after_kwarg_timeout_is_met(
@@ -188,7 +205,15 @@ def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue
         queue_utils,
         "process_time",
         autospec=True,
-        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4],
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+            0.35 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 4,
+            0.4 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 5,
+        ],
     )
     assert is_queue_eventually_empty(q, timeout_seconds=0.36) is False
     assert mocked_empty.call_count == 5
@@ -199,10 +224,10 @@ def test_is_queue_eventually_empty__returns_true_after_multiple_attempts_with_ev
 ):
     q = queue.Queue()
     mocked_empty = mocker.patch.object(
-        q, "empty", autospec=True, side_effect=[False, False, False, False, True]
+        q, "empty", autospec=True, side_effect=[False, False, False, True]
     )
     assert is_queue_eventually_empty(q) is True
-    assert mocked_empty.call_count == 5
+    assert mocked_empty.call_count == 4
 
 
 def test_is_queue_eventually_not_empty__returns_true_with_not_empty_threading_queue__after_just_one_call(
@@ -228,8 +253,13 @@ def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue
 ):
     q = queue.Queue()
     spied_empty = mocker.spy(q, "empty")
-    assert is_queue_eventually_not_empty(q) is False
-    assert spied_empty.call_count > 10
+    assert (
+        is_queue_eventually_not_empty(
+            q, timeout_seconds=SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3
+        )
+        is False
+    )
+    assert spied_empty.call_count > 2
 
 
 def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue__after_kwarg_timeout_is_met(
@@ -238,7 +268,16 @@ def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue
     q = queue.Queue()
     spied_empty = mocker.spy(q, "empty")
     mocker.patch.object(
-        queue_utils, "process_time", autospec=True, side_effect=[0, 0.1, 0.15, 0.2, 0.3]
+        queue_utils,
+        "process_time",
+        autospec=True,
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+        ],
     )
     assert is_queue_eventually_not_empty(q, timeout_seconds=0.25) is False
     assert spied_empty.call_count == 3
@@ -311,3 +350,122 @@ def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__passes
         "bill", q, timeout_seconds=expected
     )
     spied_not_empty.assert_called_once_with(q, timeout_seconds=expected)
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_of_size__passes_args_to_is_queue_eventually_of_size(
+    test_queue,
+    test_description,
+    mocker,
+):
+    mocked_is_queue_eventually_of_size = mocker.patch.object(
+        queue_utils, "is_queue_eventually_of_size", autospec=True, return_value=True
+    )  # mocking instead of spying so that code coverage can still happen on MacOS which doesn't support queue.qsize
+    expected_size = 3
+    expected_timeout = 0.07
+    confirm_queue_is_eventually_of_size(
+        test_queue, expected_size, timeout_seconds=expected_timeout
+    )
+    mocked_is_queue_eventually_of_size.assert_called_once_with(
+        test_queue, expected_size, timeout_seconds=expected_timeout
+    )
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_of_size__returns_without_error_if_queue_is_of_size(
+    test_queue,
+    test_description,
+    mocker,
+):
+    mocker.patch.object(
+        queue_utils, "is_queue_eventually_of_size", autospec=True, return_value=True
+    )  # mocking instead of spying so that code coverage can still happen on MacOS which doesn't support queue.qsize
+
+    expected_size = 0
+    expected_timeout = 0.07
+    assert (
+        confirm_queue_is_eventually_of_size(
+            test_queue, expected_size, timeout_seconds=expected_timeout
+        )
+        is None
+    )
+
+
+@skip_on_mac
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_of_size__raises_error_if_queue_is_not_expected_size__when_zero_elements(
+    test_queue, test_description
+):
+    expected_size = 1
+    with pytest.raises(
+        QueueNotExpectedSizeError,
+        match=f"expected to contain {expected_size} objects but actually contained 0 objects",
+    ):
+        confirm_queue_is_eventually_of_size(
+            test_queue, expected_size, timeout_seconds=0.01
+        )
+
+
+@skip_on_mac
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_of_size__raises_error_if_queue_is_not_expected_size__when_one_object_in_queue(
+    test_queue, test_description
+):
+    expected_size = 2
+    test_queue.put("blah")
+    time.sleep(0.1)  # make sure the object is in the queue
+    with pytest.raises(
+        QueueNotExpectedSizeError,
+        match=f"expected to contain {expected_size} objects but actually contained 1 objects",
+    ):
+        confirm_queue_is_eventually_of_size(
+            test_queue, expected_size, timeout_seconds=0.01
+        )
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_of_size__given_qsize_is_mocked__then_raises_error_if_queue_is_not_expected_size__when_zero_elements(
+    test_queue,
+    test_description,
+    mocker,
+):
+    # mock qsize so test can run on a Mac
+    expected_size = 1
+    mocker.patch.object(test_queue, "qsize", autospec=True, return_value=0)
+    with pytest.raises(
+        QueueNotExpectedSizeError,
+        match=f"expected to contain {expected_size} objects but actually contained 0 objects",
+    ):
+        confirm_queue_is_eventually_of_size(
+            test_queue, expected_size, timeout_seconds=0.01
+        )

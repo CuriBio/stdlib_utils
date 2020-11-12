@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helpers for XML processing."""
+from __future__ import annotations
+
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 

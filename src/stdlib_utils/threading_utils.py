@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Controlling communication with the OpalKelly FPGA Boards."""
+from __future__ import annotations
+
 import logging
 import queue
 import threading
