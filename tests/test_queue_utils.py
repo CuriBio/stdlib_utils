@@ -14,6 +14,7 @@ from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_sti
 from stdlib_utils import queue_utils
 from stdlib_utils import QueueStillEmptyError
 from stdlib_utils import safe_get
+from stdlib_utils import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from stdlib_utils import SimpleMultiprocessingQueue
 
 # Eli (10/23/20): had to drop support for MacOS because they don't adequately support Multiprocessing queues yet
@@ -150,7 +151,16 @@ def test_is_queue_eventually_of_size__given_empty_queue__when_called_with_1__ret
         queue_utils,
         "process_time",
         autospec=True,
-        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.45],
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+            0.35 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 4,
+            0.4 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 5,
+            0.45 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 6,
+        ],
     )
     assert is_queue_eventually_of_size(test_queue, 1, timeout_seconds=0.41) is False
     assert mocked_qsize.call_count == 6
@@ -175,8 +185,13 @@ def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue
 ):
     q = queue.Queue()
     mocked_empty = mocker.patch.object(q, "empty", autospec=True, return_value=False)
-    assert is_queue_eventually_empty(q) is False
-    assert mocked_empty.call_count > 10
+    assert (
+        is_queue_eventually_empty(
+            q, timeout_seconds=SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 6
+        )
+        is False
+    )
+    assert mocked_empty.call_count > 5
 
 
 def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue__after_kwarg_timeout_is_met(
@@ -188,7 +203,15 @@ def test_is_queue_eventually_empty__returns_false_with_not_empty_threading_queue
         queue_utils,
         "process_time",
         autospec=True,
-        side_effect=[0, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4],
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+            0.35 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 4,
+            0.4 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 5,
+        ],
     )
     assert is_queue_eventually_empty(q, timeout_seconds=0.36) is False
     assert mocked_empty.call_count == 5
@@ -199,10 +222,10 @@ def test_is_queue_eventually_empty__returns_true_after_multiple_attempts_with_ev
 ):
     q = queue.Queue()
     mocked_empty = mocker.patch.object(
-        q, "empty", autospec=True, side_effect=[False, False, False, False, True]
+        q, "empty", autospec=True, side_effect=[False, False, False, True]
     )
     assert is_queue_eventually_empty(q) is True
-    assert mocked_empty.call_count == 5
+    assert mocked_empty.call_count == 4
 
 
 def test_is_queue_eventually_not_empty__returns_true_with_not_empty_threading_queue__after_just_one_call(
@@ -228,8 +251,13 @@ def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue
 ):
     q = queue.Queue()
     spied_empty = mocker.spy(q, "empty")
-    assert is_queue_eventually_not_empty(q) is False
-    assert spied_empty.call_count > 10
+    assert (
+        is_queue_eventually_not_empty(
+            q, timeout_seconds=SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3
+        )
+        is False
+    )
+    assert spied_empty.call_count > 2
 
 
 def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue__after_kwarg_timeout_is_met(
@@ -238,7 +266,16 @@ def test_is_queue_eventually_not_empty__returns_false_with_empty_threading_queue
     q = queue.Queue()
     spied_empty = mocker.spy(q, "empty")
     mocker.patch.object(
-        queue_utils, "process_time", autospec=True, side_effect=[0, 0.1, 0.15, 0.2, 0.3]
+        queue_utils,
+        "process_time",
+        autospec=True,
+        side_effect=[
+            0,
+            0.1,
+            0.15 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 1,
+            0.2 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 2,
+            0.3 - SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE * 3,
+        ],
     )
     assert is_queue_eventually_not_empty(q, timeout_seconds=0.25) is False
     assert spied_empty.call_count == 3
@@ -311,3 +348,6 @@ def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__passes
         "bill", q, timeout_seconds=expected
     )
     spied_not_empty.assert_called_once_with(q, timeout_seconds=expected)
+
+
+# def test_confirm_queue_is_eventually_of_size__(mocker)

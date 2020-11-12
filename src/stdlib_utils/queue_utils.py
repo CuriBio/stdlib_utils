@@ -11,11 +11,13 @@ import multiprocessing.queues
 import queue
 from queue import Empty
 from queue import Queue
+import time
 from time import process_time
 from typing import Any
 from typing import List
 from typing import Union
 
+from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .exceptions import QueueStillEmptyError
 
 
@@ -40,6 +42,11 @@ def _eventually_empty(
             value_to_check = not value_to_check
         if value_to_check:
             return True
+        time.sleep(
+            SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+        )  # wait 50 msec between polling the queue to allow things to process in the background
+        # process_time() does not include time during sleep, so decrement the timeout_seconds to account for this
+        timeout_seconds -= SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
     return False
 
 
@@ -95,6 +102,11 @@ def is_queue_eventually_of_size(
     while process_time() - start_time < timeout_seconds:
         if the_queue.qsize() == size:
             return True
+        time.sleep(
+            SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+        )  # wait 50 msec between polling the queue to allow things to process in the background
+        # process_time() does not include time during sleep, so decrement the timeout_seconds to account for this
+        timeout_seconds -= SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
     return False
 
 

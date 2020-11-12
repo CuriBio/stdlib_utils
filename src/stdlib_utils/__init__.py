@@ -10,6 +10,7 @@ from .checksum import compute_crc32_and_write_to_file_head
 from .checksum import compute_crc32_bytes_of_large_file
 from .checksum import compute_crc32_hex_of_large_file
 from .checksum import validate_file_head_crc32
+from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .exceptions import BlankAbsoluteResourcePathError
 from .exceptions import Crc32ChecksumValidationFailureError
 from .exceptions import Crc32InFileHeadDoesNotMatchExpectedValueError
@@ -97,4 +98,5 @@ __all__ = [
     "UnrecognizedLoggingFormatError",
     "queue_utils",
     "is_queue_eventually_of_size",
+    "SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE",
 ]
