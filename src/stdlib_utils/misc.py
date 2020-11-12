@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Misc helper utilities."""
+from __future__ import annotations
+
 import inspect
 import os
 import sys
