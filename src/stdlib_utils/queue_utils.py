@@ -19,6 +19,7 @@ from typing import Union
 
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .constants import UnionOfThreadingAndMultiprocessingQueue
+from .exceptions import QueueNotEmptyError
 from .exceptions import QueueNotExpectedSizeError
 from .exceptions import QueueStillEmptyError
 
@@ -98,6 +99,23 @@ def confirm_queue_is_eventually_of_size(
     if is_queue_eventually_of_size(the_queue, size, timeout_seconds=timeout_seconds):
         return
     raise QueueNotExpectedSizeError(the_queue, size)
+
+
+def confirm_queue_is_eventually_empty(
+    the_queue: UnionOfThreadingAndMultiprocessingQueue,
+    timeout_seconds: Union[float, int] = 0.2,
+) -> None:
+    """Raise exception if queue is not empty prior to timeout.
+
+    Typically used in unit testing to ensure that a get operation has
+    fully completed during test setup before triggering the function
+    being tested or that all items in a queue were processed by the main
+    code.
+    """
+    if is_queue_eventually_of_size(the_queue, 0, timeout_seconds=timeout_seconds):
+        return
+
+    raise QueueNotEmptyError(the_queue)
 
 
 def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: disable=invalid-name # Eli (10/22/20): I know this is long, but it's a combined helper function for unit testing

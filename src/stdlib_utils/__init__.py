@@ -23,6 +23,7 @@ from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
+from .exceptions import QueueNotEmptyError
 from .exceptions import QueueNotExpectedSizeError
 from .exceptions import QueueStillEmptyError
 from .exceptions import UnrecognizedLoggingFormatError
@@ -43,6 +44,7 @@ from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
 from .ports import confirm_port_in_use
 from .ports import is_port_in_use
+from .queue_utils import confirm_queue_is_eventually_empty
 from .queue_utils import confirm_queue_is_eventually_of_size
 from .queue_utils import drain_queue
 from .queue_utils import is_queue_eventually_empty
@@ -77,6 +79,7 @@ __all__ = [
     "confirm_port_available",
     "is_queue_eventually_empty",
     "is_queue_eventually_not_empty",
+    "confirm_queue_is_eventually_empty",
     "put_object_into_queue_and_raise_error_if_eventually_still_empty",
     "QueueStillEmptyError",
     "is_port_in_use",
@@ -106,5 +109,6 @@ __all__ = [
     "SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE",
     "confirm_queue_is_eventually_of_size",
     "QueueNotExpectedSizeError",
+    "QueueNotEmptyError",
     "UnionOfThreadingAndMultiprocessingQueue",
 ]
