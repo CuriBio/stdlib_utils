@@ -1,6 +1,12 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.7 (12-08-20)
+------------------
+
+- Added confirm_queue_is_eventually_empty
+
+
 0.3.6 (11-12-20)
 ------------------
 

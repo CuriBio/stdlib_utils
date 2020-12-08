@@ -76,6 +76,19 @@ class QueueNotExpectedSizeError(Exception):
         )
 
 
+class QueueNotEmptyError(Exception):
+    """Include information about the first object in the queue."""
+
+    def __init__(self, the_queue: UnionOfThreadingAndMultiprocessingQueue) -> None:
+        initial_size = (
+            the_queue.qsize()
+        )  # Eli (12/8/20): obtaining the size here so that everything works when qsize is mocked, instead of just adding 1 to the value afterwards
+        first_object = the_queue.get(timeout=2)
+        super().__init__(
+            f"The queue was expected to be empty but actually contained {initial_size} objects. The first object was {first_object}"
+        )
+
+
 class QueueStillEmptyError(Exception):
     def __init__(self) -> None:
         super().__init__(
