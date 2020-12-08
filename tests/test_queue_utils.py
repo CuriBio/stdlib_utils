@@ -6,6 +6,7 @@ import sys
 import time
 
 import pytest
+from stdlib_utils import confirm_queue_is_eventually_empty
 from stdlib_utils import confirm_queue_is_eventually_of_size
 from stdlib_utils import drain_queue
 from stdlib_utils import is_queue_eventually_empty
@@ -13,6 +14,7 @@ from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import is_queue_eventually_of_size
 from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
 from stdlib_utils import queue_utils
+from stdlib_utils import QueueNotEmptyError
 from stdlib_utils import QueueNotExpectedSizeError
 from stdlib_utils import QueueStillEmptyError
 from stdlib_utils import safe_get
@@ -469,3 +471,70 @@ def test_confirm_queue_is_eventually_of_size__given_qsize_is_mocked__then_raises
         confirm_queue_is_eventually_of_size(
             test_queue, expected_size, timeout_seconds=0.01
         )
+
+
+@skip_on_mac
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_empty__raises_error_if_queue_is_not_empty__when_one_object_in_queue(
+    test_queue, test_description
+):
+    expected_obj = "blah"
+    test_queue.put(expected_obj)
+    time.sleep(0.1)  # make sure the object is in the queue
+    with pytest.raises(
+        QueueNotEmptyError,
+        match=f"expected to be empty but actually contained 1 objects. The first object was {expected_obj}",
+    ):
+        confirm_queue_is_eventually_empty(test_queue, timeout_seconds=0.01)
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_empty__given_qsize_is_mocked__then_raises_error_if_queue_is_not_expected_size__when_one_element(
+    test_queue,
+    test_description,
+    mocker,
+):
+    # mock qsize so test can run on a Mac
+    mocker.patch.object(test_queue, "qsize", autospec=True, return_value=1)
+    test_queue.put("blarg")
+    time.sleep(0.1)  # make sure the object is in the queue
+
+    with pytest.raises(
+        QueueNotEmptyError,
+        match="expected to be empty but actually contained 1 objects",
+    ):
+        confirm_queue_is_eventually_empty(test_queue, timeout_seconds=0.01)
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_queue", "test_description")),
+    [
+        (queue.Queue(), "threading queue"),
+        (multiprocessing.Queue(), "multiprocessing queue"),
+    ],
+)
+def test_confirm_queue_is_eventually_empty__passes_args_to_is_queue_eventually_of_size(
+    test_queue,
+    test_description,
+    mocker,
+):
+    mocked_is_queue_eventually_of_size = mocker.patch.object(
+        queue_utils, "is_queue_eventually_of_size", autospec=True, return_value=True
+    )  # mocking instead of spying so that code coverage can still happen on MacOS which doesn't support queue.qsize
+    expected_timeout = 0.07
+    confirm_queue_is_eventually_empty(test_queue, timeout_seconds=expected_timeout)
+    mocked_is_queue_eventually_of_size.assert_called_once_with(
+        test_queue, 0, timeout_seconds=expected_timeout
+    )
