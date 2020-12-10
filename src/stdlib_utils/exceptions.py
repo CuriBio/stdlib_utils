@@ -94,3 +94,7 @@ class QueueStillEmptyError(Exception):
         super().__init__(
             "The queue was still empty even after waiting for a period after the queue.put operation to complete."
         )
+
+
+class ParallelFrameworkStillNotStoppedError(Exception):
+    pass

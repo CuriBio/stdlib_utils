@@ -9,15 +9,40 @@ from __future__ import annotations
 import multiprocessing
 import multiprocessing.queues
 from queue import Queue
+from time import perf_counter
+from time import sleep
 from typing import Any
 from typing import Dict
+from typing import Optional
 from typing import Union
 
+from .exceptions import ParallelFrameworkStillNotStoppedError
 from .multiprocessing_utils import InfiniteProcess
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
 from .queue_utils import is_queue_eventually_not_empty
 from .queue_utils import SimpleMultiprocessingQueue
 from .threading_utils import InfiniteThread
+
+
+def confirm_parallelism_is_stopped(
+    framework: InfiniteLoopingParallelismMixIn,
+    timeout_seconds: Optional[Union[float, int]] = None,
+) -> None:
+    """Confirm that a parallel thread/process is stopped.
+
+    Optionally wait until true.
+    """
+    start_time = perf_counter()
+    while True:
+        if framework.is_stopped():
+            return
+        if timeout_seconds is None:
+            break
+        if perf_counter() - start_time >= timeout_seconds:
+            break
+        sleep(0.2)  # wait in between checking to allow things to run in the background
+
+    raise ParallelFrameworkStillNotStoppedError()
 
 
 def put_log_message_into_queue(

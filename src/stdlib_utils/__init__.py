@@ -21,6 +21,7 @@ from .exceptions import LogFolderDoesNotExistError
 from .exceptions import LogFolderGivenWithoutFilePrefixError
 from .exceptions import MultipleMatchingXmlElementsError
 from .exceptions import NoMatchingXmlElementError
+from .exceptions import ParallelFrameworkStillNotStoppedError
 from .exceptions import PortNotInUseError
 from .exceptions import PortUnavailableError
 from .exceptions import QueueNotEmptyError
@@ -39,6 +40,7 @@ from .misc import print_exception
 from .misc import resource_path
 from .multiprocessing_utils import InfiniteProcess
 from .parallelism_framework import InfiniteLoopingParallelismMixIn
+from .parallelism_utils import confirm_parallelism_is_stopped
 from .parallelism_utils import invoke_process_run_and_check_errors
 from .parallelism_utils import put_log_message_into_queue
 from .ports import confirm_port_available
@@ -89,6 +91,8 @@ __all__ = [
     "InfiniteThread",
     "InfiniteLoopingParallelismMixIn",
     "put_log_message_into_queue",
+    "confirm_parallelism_is_stopped",
+    "ParallelFrameworkStillNotStoppedError",
     "print_exception",
     "get_current_file_abs_directory",
     "get_current_file_abs_path",
