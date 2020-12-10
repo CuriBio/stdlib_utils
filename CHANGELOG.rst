@@ -1,6 +1,12 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.8 (12-10-20)
+------------------
+
+- Added confirm_parallelism_is_stopped
+
+
 0.3.7 (12-08-20)
 ------------------
 
