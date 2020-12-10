@@ -30,7 +30,10 @@ def confirm_parallelism_is_stopped(
 ) -> None:
     """Confirm that a parallel thread/process is stopped.
 
-    Optionally wait until true.
+    Optionally wait until a timeout has passed before raising the error.
+
+    This is often used during testing when you want to soft_stop a parallel framework and then wait for the soft stop to completely process everything so that you can assert things about what is in the queues.
+    And then and empty queues before actually joining the parallel framework to avoid broken pipe errors and hanging on Windows platforms.
     """
     start_time = perf_counter()
     while True:
