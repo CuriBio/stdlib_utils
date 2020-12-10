@@ -5,7 +5,11 @@ import queue
 import time
 
 import pytest
+from stdlib_utils import confirm_parallelism_is_stopped
+from stdlib_utils import InfiniteProcess
+from stdlib_utils import InfiniteThread
 from stdlib_utils import invoke_process_run_and_check_errors
+from stdlib_utils import ParallelFrameworkStillNotStoppedError
 from stdlib_utils import parallelism_utils
 from stdlib_utils import put_log_message_into_queue
 from stdlib_utils import SimpleMultiprocessingQueue
@@ -153,3 +157,79 @@ def test_put_log_message_into_queue__does_not_sleep_with_default_pause_value_and
     msg = "hey there"
     put_log_message_into_queue(logging.ERROR, msg, q, logging.WARNING)
     spied_sleep.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_framework", "test_description")),
+    [
+        (InfiniteThread(queue.Queue()), "InfiniteThread"),
+        (InfiniteProcess(multiprocessing.Queue()), "InfiniteProcess"),
+    ],
+)
+def test_confirm_parallelism_is_stopped__does_not_wait_if_framework_already_stopped__even_when_timeout_supplied(
+    test_framework, test_description, mocker
+):
+    spied_sleep = mocker.spy(parallelism_utils, "sleep")
+    test_framework.stop()
+    confirm_parallelism_is_stopped(test_framework, timeout_seconds=10)
+    assert spied_sleep.call_count == 0
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_framework", "test_description")),
+    [
+        (InfiniteThread(queue.Queue()), "InfiniteThread"),
+        (InfiniteProcess(multiprocessing.Queue()), "InfiniteProcess"),
+    ],
+)
+def test_confirm_parallelism_is_stopped__raises_error_if_not_stopped(
+    test_framework, test_description, mocker
+):
+    mocker.patch.object(
+        parallelism_utils, "sleep", autospec=True
+    )  # patch sleep to speed up test
+    with pytest.raises(ParallelFrameworkStillNotStoppedError):
+        confirm_parallelism_is_stopped(test_framework)
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_framework", "test_description")),
+    [
+        (InfiniteThread(queue.Queue()), "InfiniteThread"),
+        (InfiniteProcess(multiprocessing.Queue()), "InfiniteProcess"),
+    ],
+)
+def test_confirm_parallelism_is_stopped__raises_error_if_not_stopped_after_timeout(
+    test_framework, test_description, mocker
+):
+    mocked_sleep = mocker.patch.object(
+        parallelism_utils, "sleep", autospec=True
+    )  # patch sleep to speed up test
+    mocker.patch.object(
+        parallelism_utils, "perf_counter", autospec=True, side_effect=[0, 1, 2, 12]
+    )
+    with pytest.raises(ParallelFrameworkStillNotStoppedError):
+        confirm_parallelism_is_stopped(test_framework, timeout_seconds=10)
+
+    assert mocked_sleep.call_count == 2  # confirm that it did sleep in between checking
+
+
+@pytest.mark.parametrize(
+    ",".join(("test_framework", "test_description")),
+    [
+        (InfiniteThread(queue.Queue()), "InfiniteThread"),
+        (InfiniteProcess(multiprocessing.Queue()), "InfiniteProcess"),
+    ],
+)
+def test_confirm_parallelism_is_stopped__successfully_returns_if_framework_becomes_stopped_during_execution(
+    test_framework, test_description, mocker
+):
+    mocked_sleep = mocker.patch.object(
+        parallelism_utils, "sleep", autospec=True
+    )  # patch sleep to speed up test
+    mocker.patch.object(
+        test_framework, "is_stopped", autospec=True, side_effect=[False, False, True]
+    )
+    confirm_parallelism_is_stopped(test_framework, timeout_seconds=10)
+
+    assert mocked_sleep.call_count == 2  # confirm that it did sleep in between checking
