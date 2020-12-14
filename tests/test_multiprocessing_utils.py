@@ -244,7 +244,9 @@ def test_InfiniteProcess__pause_and_unpause_work_while_running():
     error_queue = multiprocessing.Queue()
     p = InfiniteProcessThatPopulatesQueue(test_queue, error_queue)
     p.start()
-    time.sleep(0.05)  # let the queue populate
+    time.sleep(
+        1
+    )  # let the queue populate # Eli (12/14/20): in GitHub Windows containers, 0.05 seconds was too short, so just bumping up to 1 second
     p.pause()
     items_in_queue_at_pause = []
     while test_queue.empty() is False:
@@ -253,11 +255,11 @@ def test_InfiniteProcess__pause_and_unpause_work_while_running():
     assert len(items_in_queue_at_pause) > 0
     last_item_in_queue_at_pause = items_in_queue_at_pause[-1]
 
-    time.sleep(0.05)  # give the queue time to populate if pause was unsuccessful
+    time.sleep(1)  # give the queue time to populate if pause was unsuccessful
     assert test_queue.empty() is True
 
     p.unpause()
-    time.sleep(0.05)  # give the queue time to populate
+    time.sleep(1)  # give the queue time to populate
     hard_stop_results = p.hard_stop()
     p.join()
 

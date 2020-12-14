@@ -177,16 +177,16 @@ def test_InfiniteThread__pause_and_unpause_work_while_running():
     error_queue = queue.Queue()
     t = StubInfiniteThread(test_dict, error_queue)
     t.start()
-    time.sleep(0.05)  # let the value increment
+    time.sleep(1)  # let the value increment
     t.pause()
     value_at_pause = test_dict["value"]
     assert value_at_pause > 0
 
-    time.sleep(0.05)  # give the value time to increment if pause was unsuccessful
+    time.sleep(1)  # give the value time to increment if pause was unsuccessful
     assert test_dict["value"] == value_at_pause
 
     t.unpause()
-    time.sleep(0.05)  # let the value increment
+    time.sleep(1)  # let the value increment
     hard_stop_results = t.hard_stop()
     t.join()
     assert len(hard_stop_results["fatal_error_reporter"]) == 0
