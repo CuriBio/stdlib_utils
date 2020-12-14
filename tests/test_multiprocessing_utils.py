@@ -2,6 +2,7 @@
 import logging
 import multiprocessing
 from multiprocessing import Process
+import time
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
@@ -25,6 +26,17 @@ from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
 #             return isinstance(other, cls)
 
 #     return MockAny()
+
+
+class InfiniteProcessThatPopulatesQueue(InfiniteProcess):
+    def __init__(self, queue_to_populate, fatal_error_reporter) -> None:
+        super().__init__(fatal_error_reporter)
+        self._queue_to_populate = queue_to_populate
+        self._counter = 0
+
+    def _commands_for_each_run_iteration(self):
+        self._queue_to_populate.put(self._counter)
+        self._counter += 1
 
 
 def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
@@ -223,3 +235,39 @@ def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
     actual_error, _ = error_queue.get_nowait()
     assert isinstance(actual_error, type(expected_error))
     assert str(actual_error) == str(expected_error)
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.slow
+def test_InfiniteProcess__pause_and_unpause_work_while_running():
+    test_queue = SimpleMultiprocessingQueue()
+    error_queue = multiprocessing.Queue()
+    p = InfiniteProcessThatPopulatesQueue(test_queue, error_queue)
+    p.start()
+    time.sleep(
+        1
+    )  # let the queue populate # Eli (12/14/20): in GitHub Windows containers, 0.05 seconds was too short, so just bumping up to 1 second
+    p.pause()
+    items_in_queue_at_pause = []
+    while test_queue.empty() is False:
+        items_in_queue_at_pause.append(test_queue.get())
+
+    assert len(items_in_queue_at_pause) > 0
+    last_item_in_queue_at_pause = items_in_queue_at_pause[-1]
+
+    time.sleep(1)  # give the queue time to populate if pause was unsuccessful
+    assert test_queue.empty() is True
+
+    p.unpause()
+    time.sleep(1)  # give the queue time to populate
+    hard_stop_results = p.hard_stop()
+    p.join()
+
+    assert len(hard_stop_results["fatal_error_reporter"]) == 0
+
+    items_in_queue_at_stop = []
+    while test_queue.empty() is False:
+        items_in_queue_at_stop.append(test_queue.get())
+
+    assert len(items_in_queue_at_stop) > 0
+    assert items_in_queue_at_stop[0] - 1 == last_item_in_queue_at_pause

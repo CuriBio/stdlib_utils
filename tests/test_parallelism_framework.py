@@ -7,6 +7,7 @@ import time
 
 import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
+from stdlib_utils import invoke_process_run_and_check_errors
 from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import parallelism_framework
@@ -21,6 +22,7 @@ def generic_infinite_looper():
         threading.Event(),
         threading.Event(),
         threading.Event(),
+        threading.Event(),
         minimum_iteration_duration_seconds=0.01,
     )
     return p
@@ -30,6 +32,7 @@ def simple_infinite_looper():
     p = InfiniteLoopingParallelismMixIn(
         SimpleMultiprocessingQueue(),
         logging.INFO,
+        threading.Event(),
         threading.Event(),
         threading.Event(),
         threading.Event(),
@@ -309,3 +312,24 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_lon
 
     actual = p.reset_performance_tracker()
     assert actual["longest_iterations"] == expected_longest_times
+
+
+def test_InfiniteLoopingParallelismMixIn__pause__does_not_call_commands_for_each_run_iteration_when_paused__and_sets_pause_event_to_true__then_unpause_sets_event_to_false_and_commands_are_allowed_again(
+    mocker,
+):
+    p = generic_infinite_looper()
+    spied_commands = mocker.spy(p, "_commands_for_each_run_iteration")
+    p.pause()
+
+    assert p.is_paused() is True
+    invoke_process_run_and_check_errors(p)
+
+    assert spied_commands.call_count == 0
+
+    p.unpause()
+
+    assert p.is_paused() is False
+
+    invoke_process_run_and_check_errors(p)
+
+    assert spied_commands.call_count == 1

@@ -1,6 +1,12 @@
 Changelog for stdlib_utils
 ==========================
 
+0.3.9 (12-14-20)
+------------------
+
+- Added pause and unpause methods to InfiniteLoopingParallelismMixIn
+
+
 0.3.8 (12-10-20)
 ------------------
 

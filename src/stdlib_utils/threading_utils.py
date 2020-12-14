@@ -36,6 +36,7 @@ class InfiniteThread(InfiniteLoopingParallelismMixIn, threading.Thread):
             threading.Event(),
             threading.Event(),
             threading.Event(),
+            threading.Event(),
             minimum_iteration_duration_seconds=minimum_iteration_duration_seconds,
         )
         self._lock = lock
