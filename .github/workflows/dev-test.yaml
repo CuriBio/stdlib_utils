@@ -93,7 +93,7 @@ jobs:
       #   run: pip install -e .
 
       - name: Install pipenv # no known reason for this specific version of pipenv, just pinning it for good practice
-        run: pip install pipenv==2020.8.13
+        run: pip install pipenv==2020.11.15
       # - name: Display Python version
       #   run: |
       #     python -c "import sys; print(sys.version)"
