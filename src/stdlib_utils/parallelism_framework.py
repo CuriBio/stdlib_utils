@@ -61,12 +61,14 @@ class InfiniteLoopingParallelismMixIn:
         start_up_complete_event: Union[
             threading.Event, multiprocessing.synchronize.Event
         ],
+        pause_event: Union[threading.Event, multiprocessing.synchronize.Event],
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
         self._teardown_complete_event = teardown_complete_event
         self._start_up_complete_event = start_up_complete_event
+        self._pause_event = pause_event
         self._fatal_error_reporter = fatal_error_reporter
         self._process_can_be_soft_stopped = True
         self._logging_level = logging_level
@@ -208,12 +210,13 @@ class InfiniteLoopingParallelismMixIn:
         while True:
             start_timepoint_of_iteration = time.perf_counter_ns()
             self._process_can_be_soft_stopped = True
-            try:
-                self._commands_for_each_run_iteration()
-            except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
-                print_exception(e, "88a25177-b2a1-4bbb-ba92-bf5810594a99")
-                self._report_fatal_error(e)
-                self.stop()
+            if not self._pause_event.is_set():
+                try:
+                    self._commands_for_each_run_iteration()
+                except Exception as e:  # pylint: disable=broad-except # The deliberate goal of this is to catch everything and put it into the error queue
+                    print_exception(e, "88a25177-b2a1-4bbb-ba92-bf5810594a99")
+                    self._report_fatal_error(e)
+                    self.stop()
             if self.is_preparing_for_soft_stop() and self._process_can_be_soft_stopped:
                 self.stop()
 
@@ -393,3 +396,44 @@ class InfiniteLoopingParallelismMixIn:
                 "Classes using this mixin must have a _teardown_complete_event as either a threading.Event or multiprocessing.Event"
             )
         return teardown_complete_event.is_set()
+
+    def pause(self) -> None:
+        """Have the infinite loop skip executing commands.
+
+        This is typically useful during integration testing scenarios.
+        """
+        if not hasattr(self, "_pause_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _pause_event attribute."
+            )
+        pause_event = getattr(self, "_pause_event")
+
+        pause_event.set()
+
+    def unpause(self) -> None:
+        """Have the infinite loop resume executing commands.
+
+        This is typically useful during integration testing scenarios.
+        """
+        if not hasattr(self, "_pause_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _pause_event attribute."
+            )
+        pause_event = getattr(self, "_pause_event")
+
+        pause_event.clear()
+
+    def is_paused(self) -> bool:
+        """Check if framework is paused."""
+        if not hasattr(self, "_pause_event"):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _pause_event attribute."
+            )
+        pause_event = getattr(self, "_pause_event")
+        if not isinstance(
+            pause_event, (threading.Event, multiprocessing.synchronize.Event)
+        ):
+            raise NotImplementedError(
+                "Classes using this mixin must have a _pause_event as either a threading.Event or multiprocessing.Event"
+            )
+        return pause_event.is_set()
