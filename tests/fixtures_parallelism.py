@@ -12,6 +12,7 @@ init_test_args_InfiniteLoopingParallelismMixIn = [
     mock.ANY,
     mock.ANY,
     mock.ANY,
+    mock.ANY,
 ]
 
 

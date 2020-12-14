@@ -2,6 +2,7 @@
 import logging
 import queue
 import threading
+import time
 
 import pytest
 from stdlib_utils import get_formatted_stack_trace
@@ -13,6 +14,15 @@ from .fixtures_parallelism import InfiniteThreadThatCountsIterations
 from .fixtures_parallelism import InfiniteThreadThatRaisesError
 from .fixtures_parallelism import InfiniteThreadThatTracksSetup
 from .fixtures_parallelism import init_test_args_InfiniteLoopingParallelismMixIn
+
+
+class StubInfiniteThread(InfiniteThread):
+    def __init__(self, dict_to_increment, fatal_error_reporter) -> None:
+        super().__init__(fatal_error_reporter)
+        self._dict_to_increment = dict_to_increment
+
+    def _commands_for_each_run_iteration(self):
+        self._dict_to_increment["value"] += 1
 
 
 def test_InfiniteThread__init__calls_Thread_super(mocker):
@@ -158,3 +168,28 @@ def test_InfiniteThread_can_set_minimum_iteration_duration():
     t = InfiniteThread(error_queue, minimum_iteration_duration_seconds=0.23)
 
     assert t.get_minimum_iteration_duration_seconds() == 0.23
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.slow
+def test_InfiniteThread__pause_and_unpause_work_while_running():
+    test_dict = {"value": 0}
+    error_queue = queue.Queue()
+    t = StubInfiniteThread(test_dict, error_queue)
+    t.start()
+    time.sleep(1)  # let the value increment
+    t.pause()
+    value_at_pause = test_dict["value"]
+    assert value_at_pause > 0
+
+    time.sleep(1)  # give the value time to increment if pause was unsuccessful
+    assert test_dict["value"] == value_at_pause
+
+    t.unpause()
+    time.sleep(1)  # let the value increment
+    hard_stop_results = t.hard_stop()
+    t.join()
+    assert len(hard_stop_results["fatal_error_reporter"]) == 0
+
+    value_after_stop = test_dict["value"]
+    assert value_after_stop > value_at_pause
