@@ -118,7 +118,7 @@ jobs:
           pip -V
           pip freeze
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Install Main Package
         run: pip install -e .
@@ -198,7 +198,7 @@ jobs:
           pip -V
           pip freeze
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Log full installed packages
         run: pip freeze
@@ -290,7 +290,7 @@ jobs:
         run: python -c "import ${{ steps.extract_package_info.outputs.package-name }}"
 
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Log full installed packages
         run: pip freeze
@@ -342,7 +342,7 @@ jobs:
           pip -V
           pip freeze
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Log full installed packages
         run: pip freeze
@@ -435,7 +435,7 @@ jobs:
         run: python -c "import ${{ steps.extract_package_info.outputs.package-name }}"
 
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Log full installed packages
         run: pip freeze

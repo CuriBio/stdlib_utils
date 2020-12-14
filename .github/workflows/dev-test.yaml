@@ -77,7 +77,7 @@ jobs:
           pip -V
           pip freeze
       - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
 
       - name: Install Main Package
         run: pip install -e .
@@ -127,5 +127,5 @@ jobs:
           fail_ci_if_error: true
 
       - name: Run prerelease to check packaging compatibilty
-        if: matrix.IS_FASTEST_JOB == true
+        # Eli (12/14/20): important to check this on all platforms (not just the fastest job) because sometimes the pre-installed dependencies vary
         run: python prerelease.py --no-input
