@@ -54,6 +54,16 @@ jobs:
           python -c "import sys; print(sys.version)"
           python -m venv venv
 
+      - name: Cache Python modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-python-modules
+        with:
+          path: ./.pipenv_cache
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-build-${{ env.cache-name }}-${{ hashFiles('**/Pipfile.lock') }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-build-${{ env.cache-name }}-
+
       - name: Cache Pre-commit hooks
         uses: actions/cache@v2
         env:
@@ -65,24 +75,55 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-${{ matrix.python-version }}-build-${{ env.cache-name }}-
 
-      - name: Activate virtual environment (Linux/MacOS)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: . venv/bin/activate
-      - name: Activate virtual environment (Windows)
-        if: runner.os == 'Windows'
-        run: venv\Scripts\Activate.ps1
+      # - name: Activate virtual environment (Linux/MacOS)
+      #   if: runner.os == 'Linux' || runner.os == 'macOS'
+      #   run: . venv/bin/activate
+      # - name: Activate virtual environment (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: venv\Scripts\Activate.ps1
 
-      - name: Display Pip Version and confirm environment empty
+      # - name: Display Pip Version and confirm environment empty
+      #   run: |
+      #     pip -V
+      #     pip freeze
+      # - name: Install Dev Dependencies
+      #   run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
+
+      # - name: Install Main Package
+      #   run: pip install -e .
+
+      - name: Install pipenv # no known reason for this specific version of pipenv, just pinning it for good practice
+        run: pip install pipenv==2020.8.13
+      # - name: Display Python version
+      #   run: |
+      #     python -c "import sys; print(sys.version)"
+      #     python -m venv venv
+      # - name: Activate virtual environment (Linux/MacOS)
+      #   if: runner.os == 'Linux'
+      #   run: . venv/bin/activate
+      # - name: Activate virtual environment (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: venv\Scripts\Activate.ps1
+      - name: Setup Pipenv
+        env:
+          PIPENV_VENV_IN_PROJECT: 1
+        # Eli (10/28/20): in the windows environments, just saying `pipenv --three` defaults to the highest installed version of Python on the image...not the actual one specified in the matrix. So need to specify
         run: |
-          pip -V
-          pip freeze
-      - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt --upgrade # Eli (12/14/20): the Upgrade flag is needed temporarily because Ubuntu 18 by default has chardet==4.0 which is incompatible with requests
+          pipenv --python ${{ matrix.python-version }}
+          pipenv run pip freeze
 
-      - name: Install Main Package
-        run: pip install -e .
-      - name: Log full installed packages
-        run: pip freeze
+
+      # - name: Log full installed packages
+      #   run: pip freeze
+
+      - name: Install Python Dependencies
+        env:
+          PIPENV_CACHE_DIR: ./.pipenv_cache
+        # Eli (10/28/20): The --sequential flag was found to be necessary on windows due to issues where scipy wouldn't recognize that it had been installed. Also, when this was part of a set of multiple run commands using the pipe, when it errored it didn't cause the whole step to fail, so separating it out into its own step
+        run: pipenv install --dev --deploy --sequential
+
+      - name: Log full installed Python packages
+        run: pipenv run pip freeze
 
       - name: Run pre-commit hooks
         if: matrix.IS_FASTEST_JOB == true
@@ -90,16 +131,16 @@ jobs:
           PRE_COMMIT_HOME: ./.precommit_cache
         # only enable pre-commit on the fastest job
         run: |
-          pre-commit install
-          pre-commit run -a
+          pipenv run pre-commit install
+          pipenv run pre-commit run -a
 
       - name: Run Tests with randomly generated seed
         if: github.event.inputs.randomlyseed == ''
-        run: pytest -xsvv --cov-report=xml --full-ci --include-slow-tests
+        run: pipenv run pytest -xsvv --cov-report=xml --full-ci --include-slow-tests
 
       - name: Run Tests with supplied pytest-randomly seed
         if: github.event.inputs.randomlyseed != ''
-        run: pytest -xsvv --cov-report=xml --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}
+        run: pipenv run pytest -xsvv --cov-report=xml --full-ci --include-slow-tests --randomly-seed=${{ github.event.inputs.randomlyseed }}
 
       - name: Archive Pytest Code Coverage if failure
         if: ${{ failure() }}
@@ -108,10 +149,10 @@ jobs:
           name: pytest-coverage-report--${{ matrix.os }}--${{ matrix.python-version }}
           path: "coverage-report-pytest/**/*"
 
-      - name: Confirm Sphinx Docs build correctly
-        # only check Sphinx docs build on the fastest job
-        if: matrix.IS_FASTEST_JOB == true
-        run: SPHINXOPTS="-W" make --directory=docs html # the -W flag treats warnings as errors to cause build failures
+      # - name: Confirm Sphinx Docs build correctly
+      #   # only check Sphinx docs build on the fastest job
+      #   if: matrix.IS_FASTEST_JOB == true
+      #   run: SPHINXOPTS="-W" make --directory=docs html # the -W flag treats warnings as errors to cause build failures
 
       - name: Upload coverage to Codecov
         # only upload coverage from fastest job
@@ -128,4 +169,4 @@ jobs:
 
       - name: Run prerelease to check packaging compatibilty
         # Eli (12/14/20): important to check this on all platforms (not just the fastest job) because sometimes the pre-installed dependencies vary
-        run: python prerelease.py --no-input
+        run: pipenv run python prerelease.py --no-input
