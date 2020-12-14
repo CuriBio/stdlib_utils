@@ -15,3 +15,6 @@ global-exclude *.pyc
 global-exclude prerelease.py
 global-exclude conftest.py
 global-exclude .bash_scripts/**
+global-exclude Pipfile
+global-exclude Pipfile.lock
+global-exclude pyproject.toml
