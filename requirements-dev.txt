@@ -20,6 +20,6 @@ zest.releaser[recommended]==6.22.1
 sphinx==3.3.1
 chardet==3.0.2 # Eli (12/14/20) special requirement to resolve conflict with requests package
 
-pytest-mock==3.3.1
+pytest-mock==3.4.0
 pytest-timeout==1.4.2
 freezegun==1.0.0
