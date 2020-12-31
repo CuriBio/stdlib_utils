@@ -313,6 +313,17 @@ def test_safe_get__returns_expected_items():
     assert actual_items == expected_items
 
 
+def test_safe_get__calls_queue_get_correctly(mocker):
+    q = Queue()
+    spied_get = mocker.spy(q, "get")
+
+    expected_timeout = 2.3
+    safe_get(q, timeout_secs=expected_timeout)
+
+    assert spied_get.call_args[1]["timeout"] == expected_timeout
+    assert spied_get.call_args[1]["block"] is True
+
+
 def test_drain_queue__returns_list_of_expected_items__and_ignores_None_objects():
     expected_items = [100, 200, 300]
 
