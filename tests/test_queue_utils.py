@@ -343,6 +343,25 @@ def test_drain_queue__returns_list_of_expected_items__and_ignores_None_objects()
     assert actual == expected_items
 
 
+def test_drain_queue__calls_queue_get_correctly(mocker):
+    q = Queue()
+    q.put(1)
+    spied_get = mocker.spy(q, "get")
+
+    expected_timeout = 5.9
+    drain_queue(q, timeout_secs=expected_timeout)
+    assert spied_get.call_args[1]["timeout"] == expected_timeout
+    assert spied_get.call_args[1]["block"] is True
+
+
+def test_drain_queue__used_default_queue_get_timeout_if_timeout_secs_not_given(mocker):
+    q = Queue()
+    q.put("item")
+    spied_get = mocker.spy(q, "get")
+    drain_queue(q)
+    assert spied_get.call_args[1]["timeout"] == QUEUE_DRAIN_TIMEOUT_SECONDS
+
+
 def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__puts_object_into_queue():
     expected = "bob"
     q = Queue()
