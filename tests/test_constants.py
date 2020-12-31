@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import typing
 
+from stdlib_utils import QUEUE_CHECK_TIMEOUT_SECONDS
+from stdlib_utils import QUEUE_DRAIN_TIMEOUT_SECONDS
 from stdlib_utils import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from stdlib_utils import UnionOfThreadingAndMultiprocessingQueue
 
@@ -8,6 +10,8 @@ from stdlib_utils import UnionOfThreadingAndMultiprocessingQueue
 def test_polling_times():
 
     assert SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE == 0.05
+    assert QUEUE_CHECK_TIMEOUT_SECONDS == 0.2
+    assert QUEUE_DRAIN_TIMEOUT_SECONDS == 0.02
 
 
 def test_type_aliases():
