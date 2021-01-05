@@ -12,6 +12,8 @@ from .checksum import compute_crc32_and_write_to_file_head
 from .checksum import compute_crc32_bytes_of_large_file
 from .checksum import compute_crc32_hex_of_large_file
 from .checksum import validate_file_head_crc32
+from .constants import QUEUE_CHECK_TIMEOUT_SECONDS
+from .constants import QUEUE_DRAIN_TIMEOUT_SECONDS
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .constants import UnionOfThreadingAndMultiprocessingQueue
 from .exceptions import BlankAbsoluteResourcePathError
@@ -115,4 +117,6 @@ __all__ = [
     "QueueNotExpectedSizeError",
     "QueueNotEmptyError",
     "UnionOfThreadingAndMultiprocessingQueue",
+    "QUEUE_CHECK_TIMEOUT_SECONDS",
+    "QUEUE_DRAIN_TIMEOUT_SECONDS",
 ]
