@@ -17,6 +17,8 @@ from typing import Any
 from typing import List
 from typing import Union
 
+from .constants import QUEUE_CHECK_TIMEOUT_SECONDS
+from .constants import QUEUE_DRAIN_TIMEOUT_SECONDS
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .constants import UnionOfThreadingAndMultiprocessingQueue
 from .exceptions import QueueNotEmptyError
@@ -27,7 +29,7 @@ from .exceptions import QueueStillEmptyError
 def _eventually_empty(
     should_be_empty: bool,
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> bool:
     """Help to determine if queue is eventually empty or not."""
     start_time = process_time()
@@ -48,7 +50,7 @@ def _eventually_empty(
 
 def is_queue_eventually_empty(
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> bool:
     """Check if queue is empty prior to timeout occurring."""
     return _eventually_empty(True, the_queue, timeout_seconds=timeout_seconds)
@@ -56,7 +58,7 @@ def is_queue_eventually_empty(
 
 def is_queue_eventually_not_empty(
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> bool:
     """Check if queue is not empty prior to timeout occurring."""
     return _eventually_empty(False, the_queue, timeout_seconds=timeout_seconds)
@@ -65,7 +67,7 @@ def is_queue_eventually_not_empty(
 def is_queue_eventually_of_size(
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
     size: int,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> bool:
     """Check if queue is a certain size prior to timeout occurring.
 
@@ -88,7 +90,7 @@ def is_queue_eventually_of_size(
 def confirm_queue_is_eventually_of_size(
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
     size: int,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> None:
     """Raise exception if queue is not a certain size prior to timeout.
 
@@ -103,7 +105,7 @@ def confirm_queue_is_eventually_of_size(
 
 def confirm_queue_is_eventually_empty(
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> None:
     """Raise exception if queue is not empty prior to timeout.
 
@@ -121,7 +123,7 @@ def confirm_queue_is_eventually_empty(
 def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: disable=invalid-name # Eli (10/22/20): I know this is long, but it's a combined helper function for unit testing
     obj: object,
     the_queue: UnionOfThreadingAndMultiprocessingQueue,
-    timeout_seconds: Union[float, int] = 0.2,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> None:
     """Put an object into a queue and wait until queue is populated.
 
@@ -133,19 +135,23 @@ def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: 
         raise QueueStillEmptyError()
 
 
-def safe_get(the_queue: Queue[Any]) -> Any:  # pylint: disable=unsubscriptable-object
+def safe_get(
+    the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
+    timeout_secs: Union[float, int] = QUEUE_DRAIN_TIMEOUT_SECONDS,
+) -> Any:
     try:
-        return the_queue.get(block=True, timeout=0.02)
+        return the_queue.get(block=True, timeout=timeout_secs)
     except Empty:
         return None
 
 
 def drain_queue(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
+    timeout_secs: Union[float, int] = QUEUE_DRAIN_TIMEOUT_SECONDS,
 ) -> List[Any]:
     items = list()
     while not the_queue.empty():
-        item = safe_get(the_queue)
+        item = safe_get(the_queue, timeout_secs=timeout_secs)
         if item is not None:
             items.append(item)
     return items
