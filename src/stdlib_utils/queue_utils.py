@@ -18,7 +18,6 @@ from typing import List
 from typing import Union
 
 from .constants import QUEUE_CHECK_TIMEOUT_SECONDS
-from .constants import QUEUE_DRAIN_TIMEOUT_SECONDS
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .constants import UnionOfThreadingAndMultiprocessingQueue
 from .exceptions import QueueNotEmptyError
@@ -137,7 +136,7 @@ def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: 
 
 def safe_get(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
-    timeout_secs: Union[float, int] = QUEUE_DRAIN_TIMEOUT_SECONDS,
+    timeout_secs: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> Any:
     try:
         return the_queue.get(block=True, timeout=timeout_secs)
@@ -147,7 +146,7 @@ def safe_get(
 
 def drain_queue(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
-    timeout_secs: Union[float, int] = QUEUE_DRAIN_TIMEOUT_SECONDS,
+    timeout_secs: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> List[Any]:
     items = list()
     while not the_queue.empty():
