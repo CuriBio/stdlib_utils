@@ -13,7 +13,7 @@ from stdlib_utils import is_queue_eventually_empty
 from stdlib_utils import is_queue_eventually_not_empty
 from stdlib_utils import is_queue_eventually_of_size
 from stdlib_utils import put_object_into_queue_and_raise_error_if_eventually_still_empty
-from stdlib_utils import QUEUE_DRAIN_TIMEOUT_SECONDS
+from stdlib_utils import QUEUE_CHECK_TIMEOUT_SECONDS
 from stdlib_utils import queue_utils
 from stdlib_utils import QueueNotEmptyError
 from stdlib_utils import QueueNotExpectedSizeError
@@ -328,7 +328,7 @@ def test_safe_get__used_default_queue_get_timeout_if_timeout_secs_not_given(mock
     q = Queue()
     spied_get = mocker.spy(q, "get")
     safe_get(q)
-    assert spied_get.call_args[1]["timeout"] == QUEUE_DRAIN_TIMEOUT_SECONDS
+    assert spied_get.call_args[1]["timeout"] == QUEUE_CHECK_TIMEOUT_SECONDS
 
 
 def test_drain_queue__returns_list_of_expected_items__and_ignores_None_objects():
@@ -359,7 +359,7 @@ def test_drain_queue__used_default_queue_get_timeout_if_timeout_secs_not_given(m
     q.put("item")
     spied_get = mocker.spy(q, "get")
     drain_queue(q)
-    assert spied_get.call_args[1]["timeout"] == QUEUE_DRAIN_TIMEOUT_SECONDS
+    assert spied_get.call_args[1]["timeout"] == QUEUE_CHECK_TIMEOUT_SECONDS
 
 
 def test_put_object_into_queue_and_raise_error_if_eventually_still_empty__puts_object_into_queue():
