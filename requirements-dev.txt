@@ -17,7 +17,7 @@ pytest-randomly==3.5.0
 pylint==2.6.0
 pytest-pylint==0.18.0
 zest.releaser[recommended]==6.22.1
-sphinx==3.4.2
+sphinx==3.4.3
 
 pytest-mock==3.5.0
 pytest-timeout==1.4.2
