@@ -21,4 +21,4 @@ sphinx==3.4.3
 
 pytest-mock==3.5.1
 pytest-timeout==1.4.2
-freezegun==1.0.0
+freezegun==1.1.0
