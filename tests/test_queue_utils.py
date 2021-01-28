@@ -319,12 +319,12 @@ def test_safe_get__calls_queue_get_correctly(mocker):
     spied_get = mocker.spy(q, "get")
 
     expected_timeout = 2.3
-    safe_get(q, timeout_secs=expected_timeout)
+    safe_get(q, timeout_seconds=expected_timeout)
     assert spied_get.call_args[1]["timeout"] == expected_timeout
     assert spied_get.call_args[1]["block"] is True
 
 
-def test_safe_get__used_default_queue_get_timeout_if_timeout_secs_not_given(mocker):
+def test_safe_get__used_default_queue_get_timeout_if_timeout_seconds_not_given(mocker):
     q = Queue()
     spied_get = mocker.spy(q, "get")
     safe_get(q)
@@ -349,12 +349,14 @@ def test_drain_queue__calls_queue_get_correctly(mocker):
     spied_get = mocker.spy(q, "get")
 
     expected_timeout = 5.9
-    drain_queue(q, timeout_secs=expected_timeout)
+    drain_queue(q, timeout_seconds=expected_timeout)
     assert spied_get.call_args[1]["timeout"] == expected_timeout
     assert spied_get.call_args[1]["block"] is True
 
 
-def test_drain_queue__used_default_queue_get_timeout_if_timeout_secs_not_given(mocker):
+def test_drain_queue__used_default_queue_get_timeout_if_timeout_seconds_not_given(
+    mocker,
+):
     q = Queue()
     q.put("item")
     spied_get = mocker.spy(q, "get")
