@@ -1,7 +1,7 @@
 Changelog for stdlib_utils
 ==========================
 
-0.4.0 (unreleased)
+0.4.0 (2021-01-28)
 -------------------
 
 - Changed method name from ``unpause`` to ``resume``
