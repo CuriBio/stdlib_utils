@@ -1,6 +1,13 @@
 Changelog for stdlib_utils
 ==========================
 
+0.4.0 (unreleased)
+-------------------
+
+- Changed method name from ``unpause`` to ``resume``
+- Changed kwarg from timeout_secs to timeout_seconds to be more consistent
+
+
 
 0.3.11 (2020-12-31)
 -------------------

@@ -172,7 +172,7 @@ def test_InfiniteThread_can_set_minimum_iteration_duration():
 
 @pytest.mark.timeout(5)
 @pytest.mark.slow
-def test_InfiniteThread__pause_and_unpause_work_while_running():
+def test_InfiniteThread__pause_and_resume_work_while_running():
     test_dict = {"value": 0}
     error_queue = queue.Queue()
     t = StubInfiniteThread(test_dict, error_queue)
@@ -185,7 +185,7 @@ def test_InfiniteThread__pause_and_unpause_work_while_running():
     time.sleep(1)  # give the value time to increment if pause was unsuccessful
     assert test_dict["value"] == value_at_pause
 
-    t.unpause()
+    t.resume()
     time.sleep(1)  # let the value increment
     hard_stop_results = t.hard_stop()
     t.join()

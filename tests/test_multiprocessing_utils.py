@@ -239,7 +239,7 @@ def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
 
 @pytest.mark.timeout(5)
 @pytest.mark.slow
-def test_InfiniteProcess__pause_and_unpause_work_while_running():
+def test_InfiniteProcess__pause_and_resume_work_while_running():
     test_queue = SimpleMultiprocessingQueue()
     error_queue = multiprocessing.Queue()
     p = InfiniteProcessThatPopulatesQueue(test_queue, error_queue)
@@ -258,7 +258,7 @@ def test_InfiniteProcess__pause_and_unpause_work_while_running():
     time.sleep(1)  # give the queue time to populate if pause was unsuccessful
     assert test_queue.empty() is True
 
-    p.unpause()
+    p.resume()
     time.sleep(1)  # give the queue time to populate
     hard_stop_results = p.hard_stop()
     p.join()
