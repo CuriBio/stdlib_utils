@@ -5,7 +5,7 @@ Changelog for stdlib_utils
 -------------------
 
 - Changed method name from ``unpause`` to ``resume``
-- Changed kwarg from timeout_secs to timeout_seconds to be more consistent
+- Changed kwarg from ``timeout_secs`` to ``timeout_seconds`` to be more consistent
 
 
 
