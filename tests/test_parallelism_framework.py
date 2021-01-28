@@ -314,7 +314,7 @@ def test_InfiniteLoopingParallelismMixIn__reset_performance_tracker__returns_lon
     assert actual["longest_iterations"] == expected_longest_times
 
 
-def test_InfiniteLoopingParallelismMixIn__pause__does_not_call_commands_for_each_run_iteration_when_paused__and_sets_pause_event_to_true__then_unpause_sets_event_to_false_and_commands_are_allowed_again(
+def test_InfiniteLoopingParallelismMixIn__pause__does_not_call_commands_for_each_run_iteration_when_paused__and_sets_pause_event_to_true__then_resume_sets_event_to_false_and_commands_are_allowed_again(
     mocker,
 ):
     p = generic_infinite_looper()
@@ -326,7 +326,7 @@ def test_InfiniteLoopingParallelismMixIn__pause__does_not_call_commands_for_each
 
     assert spied_commands.call_count == 0
 
-    p.unpause()
+    p.resume()
 
     assert p.is_paused() is False
 

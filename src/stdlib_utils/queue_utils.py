@@ -136,21 +136,21 @@ def put_object_into_queue_and_raise_error_if_eventually_still_empty(  # pylint: 
 
 def safe_get(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
-    timeout_secs: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> Any:
     try:
-        return the_queue.get(block=True, timeout=timeout_secs)
+        return the_queue.get(block=True, timeout=timeout_seconds)
     except Empty:
         return None
 
 
 def drain_queue(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
-    timeout_secs: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
+    timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> List[Any]:
     items = list()
     while not the_queue.empty():
-        item = safe_get(the_queue, timeout_secs=timeout_secs)
+        item = safe_get(the_queue, timeout_seconds=timeout_seconds)
         if item is not None:
             items.append(item)
     return items

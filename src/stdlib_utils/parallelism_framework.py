@@ -410,7 +410,7 @@ class InfiniteLoopingParallelismMixIn:
 
         pause_event.set()
 
-    def unpause(self) -> None:
+    def resume(self) -> None:
         """Have the infinite loop resume executing commands.
 
         This is typically useful during integration testing scenarios.
