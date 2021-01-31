@@ -1,10 +1,10 @@
 Changelog for stdlib_utils
 ==========================
 
-0.4.1 (2021-01-31)
+0.4.2 (2021-01-31)
 ------------------
 
-- Added ``perform_teardown_after_loop`` kwarg to ``invoke_process_run_and_check_errors``
+- Added ``perform_teardown_after_loop`` kwarg to ``invoke_process_run_and_check_errors``.
 
 
 0.4.0 (2021-01-28)
