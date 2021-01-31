@@ -57,9 +57,7 @@ def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_Infinite
     assert mocked_log.call_count == 1
 
 
-def test_invoke_process_run_and_check_errors__does_not_run_setup_or_teardown_by_default(
-    mocker,
-):
+def test_invoke_process_run_and_check_errors__does_not_run_setup_or_teardown_by_default():
     error_queue = SimpleMultiprocessingQueue()
     p = InfiniteProcessThatTracksSetup(error_queue)
     invoke_process_run_and_check_errors(p)  # runs once by default
@@ -69,6 +67,26 @@ def test_invoke_process_run_and_check_errors__does_not_run_setup_or_teardown_by_
 
     invoke_process_run_and_check_errors(p, num_iterations=2)
     assert p.get_num_iterations() == 3
+
+
+def test_invoke_process_run_and_check_errors__runs_setup_with_given_kwarg():
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcessThatTracksSetup(error_queue)
+    invoke_process_run_and_check_errors(  # runs once by default
+        p, perform_setup_before_loop=True
+    )
+    assert p.get_num_iterations() == 1
+    assert p.is_setup() is True
+
+
+def test_invoke_process_run_and_check_errors__runs_teardown_with_given_kwarg():
+    error_queue = SimpleMultiprocessingQueue()
+    p = InfiniteProcessThatTracksSetup(error_queue)
+    invoke_process_run_and_check_errors(  # runs once by default
+        p, perform_teardown_after_loop=True
+    )
+    assert p.get_num_iterations() == 1
+    assert p.is_teardown_complete() is True
 
 
 def test_invoke_process_run_and_check_errors__raises_and_logs_error_for_InfiniteThread(

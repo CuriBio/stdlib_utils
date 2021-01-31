@@ -83,6 +83,7 @@ def invoke_process_run_and_check_errors(
     the_process: InfiniteLoopingParallelismMixIn,
     num_iterations: int = 1,
     perform_setup_before_loop: bool = False,
+    perform_teardown_after_loop: bool = False,
 ) -> None:
     """Call the run method of a process and raise any errors.
 
@@ -92,7 +93,7 @@ def invoke_process_run_and_check_errors(
     the_process.run(
         num_iterations=num_iterations,
         perform_setup_before_loop=perform_setup_before_loop,
-        perform_teardown_after_loop=False,
+        perform_teardown_after_loop=perform_teardown_after_loop,
     )
 
     error_queue = the_process.get_fatal_error_reporter()
