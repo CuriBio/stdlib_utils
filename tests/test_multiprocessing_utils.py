@@ -38,6 +38,7 @@ class InfiniteProcessThatPopulatesQueue(InfiniteProcess):
     def _commands_for_each_run_iteration(self):
         self._queue_to_populate.put(self._counter)
         self._counter += 1
+        time.sleep(0.05)
 
 
 def test_InfiniteProcess_super_Process_is_called_during_init(mocker):
@@ -238,7 +239,9 @@ def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
     assert str(actual_error) == str(expected_error)
 
 
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(
+    45
+)  # Eli (2/10/21): Because there can be ~40 items put into the queue, need to ensure sufficient time to pull them all out using the sleep time between polling the queue
 @pytest.mark.slow
 def test_InfiniteProcess__pause_and_resume_work_while_running():
     test_queue = SimpleMultiprocessingQueue()
