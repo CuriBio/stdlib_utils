@@ -8,6 +8,7 @@ import pytest
 from stdlib_utils import InfiniteLoopingParallelismMixIn
 from stdlib_utils import InfiniteProcess
 from stdlib_utils import invoke_process_run_and_check_errors
+from stdlib_utils import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from stdlib_utils import SimpleMultiprocessingQueue
 
 from .fixtures_parallelism import InfiniteProcessThatCannotBeSoftStopped
@@ -237,7 +238,7 @@ def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
     assert str(actual_error) == str(expected_error)
 
 
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(5)
 @pytest.mark.slow
 def test_InfiniteProcess__pause_and_resume_work_while_running():
     test_queue = SimpleMultiprocessingQueue()
@@ -245,21 +246,24 @@ def test_InfiniteProcess__pause_and_resume_work_while_running():
     p = InfiniteProcessThatPopulatesQueue(test_queue, error_queue)
     p.start()
     time.sleep(
-        2
-    )  # let the queue populate # Eli (12/14/20): in GitHub Windows containers, 0.05 seconds was too short, so just bumping up to 1 second # Tanner (1/31/21): bumping to 2 seconds after another CI issue
+        1
+    )  # let the queue populate # Eli (12/14/20): in GitHub Windows containers, 0.05 seconds was too short, so just bumping up to 1 second
     p.pause()
     items_in_queue_at_pause = []
     while test_queue.empty() is False:
         items_in_queue_at_pause.append(test_queue.get())
+        time.sleep(
+            SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+        )  # don't relentlessly poll the queue # Eli (2/10/21): There was an odd hanging that occurred once during CI in a windows container...possibly due to relentlessly checking empty/get of the queue(?) https://github.com/CuriBio/stdlib-utils/pull/87/checks?check_run_id=1856410303
 
     assert len(items_in_queue_at_pause) > 0
     last_item_in_queue_at_pause = items_in_queue_at_pause[-1]
 
-    time.sleep(2)  # give the queue time to populate if pause was unsuccessful
+    time.sleep(1)  # give the queue time to populate if pause was unsuccessful
     assert test_queue.empty() is True
 
     p.resume()
-    time.sleep(2)  # give the queue time to populate
+    time.sleep(1)  # give the queue time to populate
     hard_stop_results = p.hard_stop()
     p.join()
 
@@ -268,6 +272,9 @@ def test_InfiniteProcess__pause_and_resume_work_while_running():
     items_in_queue_at_stop = []
     while test_queue.empty() is False:
         items_in_queue_at_stop.append(test_queue.get())
+        time.sleep(
+            SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
+        )  # don't relentlessly poll the queue # Eli (2/10/21): There was an odd hanging that occurred once during CI in a windows container...possibly due to relentlessly checking empty/get of the queue(?) https://github.com/CuriBio/stdlib-utils/pull/87/checks?check_run_id=1856410303
 
     assert len(items_in_queue_at_stop) > 0
     assert items_in_queue_at_stop[0] - 1 == last_item_in_queue_at_pause
