@@ -238,7 +238,7 @@ def test_InfiniteProcess__catches_error_in_teardown_after_loop(mocker):
     assert str(actual_error) == str(expected_error)
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 @pytest.mark.slow
 def test_InfiniteProcess__pause_and_resume_work_while_running():
     test_queue = SimpleMultiprocessingQueue()
