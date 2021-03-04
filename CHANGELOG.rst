@@ -1,6 +1,12 @@
 Changelog for stdlib_utils
 ==========================
 
+0.4.3 (2021-03-04)
+------------------
+
+- Fixed issue with ``drain_queue`` not fully draining queues in CI environments.
+
+
 0.4.2 (2021-01-31)
 ------------------
 
