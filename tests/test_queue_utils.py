@@ -331,18 +331,6 @@ def test_safe_get__used_default_queue_get_timeout_if_timeout_seconds_not_given(m
     assert spied_get.call_args[1]["timeout"] == QUEUE_CHECK_TIMEOUT_SECONDS
 
 
-def test_drain_queue__returns_list_of_expected_items__and_ignores_None_objects():
-    expected_items = [100, 200, 300]
-
-    q = Queue()
-    for item in expected_items:
-        q.put(None)
-        q.put(item)
-
-    actual = drain_queue(q)
-    assert actual == expected_items
-
-
 def test_drain_queue__calls_queue_get_correctly(mocker):
     q = Queue()
     q.put(1)
