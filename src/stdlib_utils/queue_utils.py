@@ -148,12 +148,12 @@ def drain_queue(
     the_queue: Queue[Any],  # pylint: disable=unsubscriptable-object
     timeout_seconds: Union[float, int] = QUEUE_CHECK_TIMEOUT_SECONDS,
 ) -> List[Any]:
-    items = list()
-    while not the_queue.empty():
+    queue_items = list()
+    item = safe_get(the_queue, timeout_seconds=timeout_seconds)
+    while item is not None:
+        queue_items.append(item)
         item = safe_get(the_queue, timeout_seconds=timeout_seconds)
-        if item is not None:
-            items.append(item)
-    return items
+    return queue_items
 
 
 class SimpleMultiprocessingQueue(multiprocessing.queues.SimpleQueue):  # type: ignore[type-arg] # noqa: F821 # Eli (3/10/20) can't figure out why SimpleQueue doesn't have type arguments defined in the stdlib(?)
