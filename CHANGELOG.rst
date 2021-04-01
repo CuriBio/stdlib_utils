@@ -1,6 +1,15 @@
 Changelog for stdlib_utils
 ==========================
 
+
+0.4.4 (2021-04-01)
+------------------
+
+- Added ``get_cms_since_init`` to ``InfiniteLoopingParallelismMixIn``.
+- Fixed issue with incorrect values in performance metrics for processes running
+  in Windows.
+
+
 0.4.3 (2021-03-04)
 ------------------
 
