@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from .constants import NANOSECONDS_PER_CENTIMILLISECOND
 from .misc import get_formatted_stack_trace
 from .misc import print_exception
 from .queue_utils import is_queue_eventually_not_empty
@@ -64,6 +65,7 @@ class InfiniteLoopingParallelismMixIn:
         pause_event: Union[threading.Event, multiprocessing.synchronize.Event],
         minimum_iteration_duration_seconds: Union[float, int] = 0.01,
     ) -> None:
+        self._init_time_ns: Optional[int] = None
         self._stop_event = stop_event
         self._soft_stop_event = soft_stop_event
         self._teardown_complete_event = teardown_complete_event
@@ -76,7 +78,6 @@ class InfiniteLoopingParallelismMixIn:
         self._idle_iteration_time_ns = 0
         self._percent_use_values: List[float] = list()
         self._longest_iterations: List[int] = list()
-        self._init_performance_measurements()
 
     def _init_performance_measurements(self) -> None:
         # separate to make mocking easier
@@ -85,6 +86,9 @@ class InfiniteLoopingParallelismMixIn:
     def _reset_performance_measurements(self) -> None:
         self._start_timepoint_of_last_performance_measurement = time.perf_counter_ns()
         self._idle_iteration_time_ns = 0
+
+    def _reset_start_time(self) -> None:
+        self._init_time_ns = time.perf_counter_ns()
 
     def get_start_timepoint_of_performance_measurement(self) -> int:
         return self._start_timepoint_of_last_performance_measurement
@@ -132,6 +136,12 @@ class InfiniteLoopingParallelismMixIn:
     def get_minimum_iteration_duration_seconds(self) -> Union[float, int]:
         return self._minimum_iteration_duration_seconds
 
+    def get_cms_since_init(self) -> int:
+        if self._init_time_ns is None:
+            return 0
+        ns_since_init = time.perf_counter_ns() - self._init_time_ns
+        return ns_since_init // NANOSECONDS_PER_CENTIMILLISECOND
+
     def get_logging_level(self) -> int:
         return self._logging_level
 
@@ -161,8 +171,12 @@ class InfiniteLoopingParallelismMixIn:
     def _setup_before_loop(self) -> None:
         """Perform any necessary setup prior to initiating the infinite loop.
 
-        This can be overridden by the subclass.
+        This can be overridden by the subclass, but the super method
+        should always be called at the start of the subclass's
+        implementation.
         """
+        self._init_performance_measurements()
+        self._reset_start_time()
 
     def _teardown_after_loop(self) -> None:
         """Perform any necessary teardown after the infinite loop has exited.

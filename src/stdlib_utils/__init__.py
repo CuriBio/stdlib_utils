@@ -12,6 +12,7 @@ from .checksum import compute_crc32_and_write_to_file_head
 from .checksum import compute_crc32_bytes_of_large_file
 from .checksum import compute_crc32_hex_of_large_file
 from .checksum import validate_file_head_crc32
+from .constants import NANOSECONDS_PER_CENTIMILLISECOND
 from .constants import QUEUE_CHECK_TIMEOUT_SECONDS
 from .constants import SECONDS_TO_SLEEP_BETWEEN_CHECKING_QUEUE_SIZE
 from .constants import UnionOfThreadingAndMultiprocessingQueue
@@ -117,4 +118,5 @@ __all__ = [
     "QueueNotEmptyError",
     "UnionOfThreadingAndMultiprocessingQueue",
     "QUEUE_CHECK_TIMEOUT_SECONDS",
+    "NANOSECONDS_PER_CENTIMILLISECOND",
 ]
